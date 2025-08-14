@@ -12,9 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="ExternalServices\" />
     <Folder Include="Persistence\" />
     <Folder Include="Repositories\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
   </ItemGroup>
 
 </Project>

@@ -11,12 +11,12 @@ public class BudgetRecord
     public string SubProjectCode { get; private set; } // کد زیرپروژه - کلید اصلی
     public string? ContractTitle { get; set; }
     public string? ContractNumber { get; set; }
-    public DateTime? ContractDate { get; set; }
+    public string? ContractDate { get; set; }
     public string? Contractor { get; set; }
     public string? Agent { get; set; }
     public string? CompanyType { get; set; }
     public string? AgentContractNumber { get; set; }
-    public DateTime? AgentContractDate { get; set; }
+    public string? AgentContractDate { get; set; }
     public string? ExecutionType { get; set; }
     public string? ContractStatus { get; set; }
     public decimal? TotalContractAmount { get; set; }
@@ -27,9 +27,9 @@ public class BudgetRecord
     public decimal? TotalCreditFromStart { get; set; }
     public string? ExecutiveDept { get; set; }
     public string? ResponsibleDept { get; set; }
-    public DateTime? StartDate { get; set; }
-    public DateTime? EndDate { get; set; }
-    public DateTime? ExtendedEndDate { get; set; }
+    public string? StartDate { get; set; }
+    public string? EndDate { get; set; }
+    public string? ExtendedEndDate { get; set; }
     public string? ActivityType { get; set; }
     public string? WorkReferralMethod { get; set; }
     public decimal? TotalInvoicesAmount { get; set; }

@@ -13,5 +13,6 @@ public interface IBudgetRepository
     Task<BudgetRecord?> GetBySubProjectCodeAsync(string subProjectCode);
     Task AddAsync(BudgetRecord record);
     Task UpdateAsync(BudgetRecord record);
-    Task DeleteAsync(string subProjectCode);
+    Task DeleteAsync(BudgetRecord record);
+    Task DeleteBySubProjectCodeAsync(string subProjectCode);
 }
