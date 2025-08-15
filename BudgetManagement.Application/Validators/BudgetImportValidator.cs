@@ -1,60 +1,81 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using BudgetManagement.Application.DTOs.Budget;
 using BudgetManagement.Domain.Entities;
-using BudgetManagement.Application.Interfaces;
-
 
 namespace BudgetManagement.Application.Validators
 {
-    public class BudgetImportValidationResult
-    {
-        public List<string> Errors { get; set; } = new();
-        public List<BudgetRecord> ValidRecords { get; set; } = new();
-        public bool HasErrors => Errors.Any();
-    }
-
     public class BudgetImportValidator
     {
-        /// <summary>
-        /// Validate budget records from Excel file for duplicate keys and required fields.
-        /// </summary>
-        public Task<BudgetImportValidationResult> ValidateAsync(IEnumerable<BudgetRecord> records)
+        public Task<BudgetValidationResultDto> ValidateAsync(
+            IEnumerable<BudgetRecord> records,
+            CancellationToken cancellationToken = default)
         {
-            var result = new BudgetImportValidationResult();
-            var recordList = records.ToList();
+            var result = new BudgetValidationResultDto();
+            var list = records?.ToList() ?? new List<BudgetRecord>();
+            if (list.Count == 0)
+            {
+                result.Errors.Add("هیچ رکوردی در فایل یافت نشد.");
+                return Task.FromResult(result);
+            }
 
-            // بررسی تکراری بودن SubProjectCode در فایل
-            var duplicateInFile = recordList
-                .GroupBy(r => r.SubProjectCode)
-                .Where(g => g.Count() > 1)
-                .Select(g => g.Key)
+            // 1) کد زیرپروژه الزامی
+            var missingCodes = list.Where(r => string.IsNullOrWhiteSpace(r.SubProjectCode)).ToList();
+            if (missingCodes.Count > 0)
+                result.Errors.Add($"تعداد {missingCodes.Count} رکورد بدون SubProjectCode است.");
+
+            // 2) تکرار کد زیرپروژه در خود فایل
+            var dupGroups = list.Where(r => !string.IsNullOrWhiteSpace(r.SubProjectCode))
+                                .GroupBy(r => r.SubProjectCode)
+                                .Where(g => g.Count() > 1)
+                                .ToList();
+            if (dupGroups.Count > 0)
+            {
+                var dupCodes = string.Join(", ", dupGroups.Select(g => $"{g.Key} x{g.Count()}"));
+                result.Errors.Add($"کدهای تکراری در فایل: {dupCodes}");
+            }
+
+            // 3) اعتبار عددی ساده (منفی نباشند)
+            foreach (var r in list)
+            {
+                if (r.TotalContractAmount < 0 ||
+                    r.InitialAmount < 0 ||
+                    r.CurrentYearCashCredit < 0 ||
+                    r.CurrentYearNonCashCredit < 0 ||
+                    r.CurrentYearTotalCredit < 0 ||
+                    r.TotalCreditFromStart < 0 ||
+                    r.TotalInvoicesAmount < 0 ||
+                    r.CurrentYearInvoicesAmount < 0)
+                {
+                    result.Errors.Add($"مقادیر منفی برای SubProjectCode={r.SubProjectCode} مجاز نیست.");
+                }
+            }
+
+            // رکوردهای معتبر = آنهایی که کد دارند و در گروه تکراری نیستند و خطای عددی ندارند
+            var badCodes = new HashSet<string>(missingCodes.Select(r => r.SubProjectCode ?? string.Empty));
+            foreach (var g in dupGroups) badCodes.Add(g.Key);
+
+            // اگر خطاهای عددی داریم، آنها را هم حذف کنیم
+            var numericErrorCodes = list
+                .Where(r => r.TotalContractAmount < 0 ||
+                            r.InitialAmount < 0 ||
+                            r.CurrentYearCashCredit < 0 ||
+                            r.CurrentYearNonCashCredit < 0 ||
+                            r.CurrentYearTotalCredit < 0 ||
+                            r.TotalCreditFromStart < 0 ||
+                            r.TotalInvoicesAmount < 0 ||
+                            r.CurrentYearInvoicesAmount < 0)
+                .Select(r => r.SubProjectCode ?? string.Empty);
+
+            foreach (var c in numericErrorCodes)
+                badCodes.Add(c);
+
+            result.ValidRecords = list
+                .Where(r => !string.IsNullOrWhiteSpace(r.SubProjectCode))
+                .Where(r => !badCodes.Contains(r.SubProjectCode!))
                 .ToList();
-
-            if (duplicateInFile.Any())
-            {
-                result.Errors.AddRange(
-                    duplicateInFile.Select(code => $"Duplicate SubProjectCode in file: {code}")
-                );
-            }
-
-            // بررسی فیلدهای ضروری
-            foreach (var record in recordList)
-            {
-                if (string.IsNullOrWhiteSpace(record.SubProjectCode))
-                    result.Errors.Add("SubProjectCode is required.");
-
-                if (string.IsNullOrWhiteSpace(record.ContractTitle))
-                    result.Errors.Add($"ContractTitle is required for SubProjectCode: {record.SubProjectCode}");
-            }
-
-            // فقط رکوردهای بدون خطا را به ValidRecords اضافه می‌کنیم
-            if (!result.HasErrors)
-            {
-                result.ValidRecords.AddRange(recordList);
-            }
 
             return Task.FromResult(result);
         }

@@ -1,10 +1,11 @@
 ﻿@page "/BudgetUpload"
 @rendermode InteractiveServer
 @using BudgetManagement.Domain.Entities
-@using BudgetManagement.Infrastructure.ExternalServices
+@using BudgetManagement.Application.DTOs.Budget
+@using BudgetManagement.Application.Interfaces
 @using Microsoft.AspNetCore.Components.Forms
 
-@inject ExcelUploaderService ExcelUploaderService
+@inject IBudgetImportUseCase ImportUseCase
 
 <h3>Budget Upload</h3>
 
@@ -13,39 +14,90 @@
     <span class="text-muted">@Status</span>
 </div>
 
+<div class="d-flex gap-2 mb-2">
+    <button class="btn btn-secondary" @onclick="Preview" disabled="@(_file == null)">پیش‌ نمایش</button>
+    <button class="btn btn-primary" @onclick="Import" disabled="@(_file == null)">واردسازی</button>
+</div>
+
+@if (PreviewResult != null)
+{
+    <div class="alert alert-info">
+        <p><strong>تعداد کل رکوردها:</strong> @PreviewResult.TotalParsed</p>
+        <p><strong>رکوردهای معتبر:</strong> @PreviewResult.TotalValid</p>
+        <p><strong>تعداد خطاها:</strong> @(PreviewResult.Errors?.Count ?? 0)</p>
+    </div>
+
+    @if (PreviewResult.Errors?.Any() == true)
+    {
+        <div class="alert alert-warning">
+            <ul class="mb-0">
+                @foreach (var err in PreviewResult.Errors)
+                {
+                    <li>@err</li>
+                }
+            </ul>
+        </div>
+    }
+}
+
 <hr />
 
 <BudgetTable Records="Records" />
 
 @code {
+    private IBrowserFile? _file;
     private List<BudgetRecord>? Records;
     private string? Status;
+    private ImportBudgetResultDto? PreviewResult;
 
-    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    private void OnInputFileChange(InputFileChangeEventArgs e)
     {
+        _file = e.File;
+        Records = null;
+        PreviewResult = null;
+        Status = _file != null ? $"فایل انتخاب شد: {_file.Name}" : "فایلی انتخاب نشد.";
+    }
+
+    private async Task Preview()
+    {
+        if (_file == null) return;
         try
         {
-            Status = "در حال خواندن فایل...";
-            Records = null;
-
-            var file = e.File;
-            if (file is null)
-            {
-                Status = "فایلی انتخاب نشد.";
-                return;
-            }
-
-            const long max = 1024L * 1024 * 64;
+            Status = "در حال پیش ‌نمایش...";
             await using var ms = new MemoryStream();
-            await file.OpenReadStream(max).CopyToAsync(ms);
+            await _file.OpenReadStream(1024L * 1024 * 64).CopyToAsync(ms);
             ms.Position = 0;
 
-            Records = await ExcelUploaderService.ReadBudgetRecordsAsync(ms);
-            Status = $"خوانش انجام شد: {Records?.Count ?? 0} ردیف.";
+            PreviewResult = await ImportUseCase.PreviewAsync(ms);
+            Records = PreviewResult.ValidRecords; // جدول دقیقا با رکوردهای معتبر پر می‌شود
+
+            Status = "پیش‌ نمایش کامل شد.";
         }
         catch (Exception ex)
         {
-            Status = $"خطا در خواندن فایل: {ex.Message}";
+            Status = $"خطا در پیش‌ نمایش: {ex.Message}";
+        }
+    }
+
+    private async Task Import()
+    {
+        if (_file == null) return;
+        try
+        {
+            Status = "در حال واردسازی...";
+            await using var ms = new MemoryStream();
+            await _file.OpenReadStream(1024L * 1024 * 64).CopyToAsync(ms);
+            ms.Position = 0;
+
+            var result = await ImportUseCase.ImportAsync(ms);
+            // می‌توانید پس از واردسازی، جدول را با همان رکوردهای معتبر یا داده‌های تازه از DB به‌روز کنید
+            Records = result.ValidRecords;
+
+            Status = $"واردسازی کامل شد: درج {result.InsertedCount} - به‌روزرسانی {result.UpdatedCount}";
+        }
+        catch (Exception ex)
+        {
+            Status = $"خطا در واردسازی: {ex.Message}";
         }
     }
 }

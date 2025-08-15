@@ -9,9 +9,5 @@
 	<ItemGroup>
 		<ProjectReference Include="..\BudgetManagement.Domain\BudgetManagement.Domain.csproj" />
 	</ItemGroup>
-	
-  <ItemGroup>
-    <Folder Include="UseCases\" />
-  </ItemGroup>
 
 </Project>
