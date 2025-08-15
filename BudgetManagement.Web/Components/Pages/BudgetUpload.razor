@@ -1,10 +1,51 @@
 ﻿@page "/BudgetUpload"
 @rendermode InteractiveServer
+@using BudgetManagement.Domain.Entities
+@using BudgetManagement.Infrastructure.ExternalServices
+@using Microsoft.AspNetCore.Components.Forms
 
-<PageTitle>BudgetUpload</PageTitle>
+@inject ExcelUploaderService ExcelUploaderService
 
-<h1>BudgetUpload</h1>
+<h3>Budget Upload</h3>
+
+<div class="d-flex gap-2 align-items-center mb-2">
+    <InputFile OnChange="OnInputFileChange" accept=".xlsx,.xls" />
+    <span class="text-muted">@Status</span>
+</div>
+
+<hr />
+
+<BudgetTable Records="Records" />
 
 @code {
+    private List<BudgetRecord>? Records;
+    private string? Status;
 
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            Status = "در حال خواندن فایل...";
+            Records = null;
+
+            var file = e.File;
+            if (file is null)
+            {
+                Status = "فایلی انتخاب نشد.";
+                return;
+            }
+
+            const long max = 1024L * 1024 * 64;
+            await using var ms = new MemoryStream();
+            await file.OpenReadStream(max).CopyToAsync(ms);
+            ms.Position = 0;
+
+            Records = await ExcelUploaderService.ReadBudgetRecordsAsync(ms);
+            Status = $"خوانش انجام شد: {Records?.Count ?? 0} ردیف.";
+        }
+        catch (Exception ex)
+        {
+            Status = $"خطا در خواندن فایل: {ex.Message}";
+        }
+    }
 }
