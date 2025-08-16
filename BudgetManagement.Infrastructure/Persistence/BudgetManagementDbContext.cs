@@ -61,7 +61,7 @@ namespace BudgetManagement.Infrastructure.Persistence
                 entity.Property(e => e.TotalInvoicesAmount).HasColumnType("decimal(18,0)").IsRequired(false);
                 entity.Property(e => e.TotalWorkProgress).HasColumnType("decimal(18,0)").IsRequired(false);
                 entity.Property(e => e.CurrentYearInvoicesAmount).HasColumnType("decimal(18,0)").IsRequired(false);
-                entity.Property(e => e.Increase25Percent).HasColumnType("decimal(18,0)").IsRequired(false);
+                //entity.Property(e => e.Increase25Percent).HasColumnType("decimal(18,0)").IsRequired(false);
                 entity.Property(e => e.AdjustmentAmount).HasColumnType("decimal(18,0)").IsRequired(false);
                 entity.Property(e => e.MaxRequiredCredit).HasColumnType("decimal(18,0)").IsRequired(false);
                 entity.Property(e => e.CreditDeficit).HasColumnType("decimal(18,0)").IsRequired(false);

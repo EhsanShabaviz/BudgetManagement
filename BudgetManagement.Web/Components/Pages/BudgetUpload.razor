@@ -7,17 +7,40 @@
 
 @inject IBudgetImportUseCase ImportUseCase
 
+
+
 <h3>Budget Upload</h3>
 
 <div class="d-flex gap-2 align-items-center mb-2">
     <InputFile OnChange="OnInputFileChange" accept=".xlsx,.xls" />
-    <span class="text-muted">@Status</span>
+    @* <span class="text-muted">@Status</span> *@
 </div>
 
 <div class="d-flex gap-2 mb-2">
-    <button class="btn btn-secondary" @onclick="Preview" disabled="@(_file == null)">پیش‌ نمایش</button>
-    <button class="btn btn-primary" @onclick="Import" disabled="@(_file == null)">واردسازی</button>
+    <button class="btn btn-secondary"
+            @onclick="Preview"
+            disabled="@(_file == null || IsPreviewing)">
+        @if (IsPreviewing)
+        {
+            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        }
+        پیش‌نمایش
+    </button>
+
+    <button class="btn btn-primary"
+            @onclick="AskImport"
+            disabled="@(!CanImport || IsImporting)">
+        بارگذاری
+    </button>
 </div>
+
+@if (ShowSuccessAlert && !IsImporting)
+{
+    <div class="alert alert-success alert-dismissible fade show alert-soft-enter" role="alert">
+        <strong>موفق!</strong> @SuccessMessage
+        <button type="button" class="btn-close" aria-label="Close" @onclick="() => ShowSuccessAlert = false"></button>
+    </div>
+}
 
 @if (PreviewResult != null)
 {
@@ -44,60 +67,216 @@
 
 <BudgetTable Records="Records" />
 
+@* ===== Modal تأیید بارگذاری (Bootstrap) ===== *@
+@if (ShowConfirmModal)
+{
+    <div class="modal fade show" tabindex="-1" role="dialog" style="display:block;" aria-modal="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">تأیید بارگذاری</h5>
+                    <button type="button" class="btn-close" aria-label="Close" @onclick="CloseModal" disabled="@IsImporting"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">
+                        @if (PreviewResult is not null)
+                        {
+                            <span>فایل شامل @PreviewResult.TotalParsed رکورد است که از میان آن‌ها @PreviewResult.TotalValid رکورد معتبر تشخیص داده شد.</span>
+                        }
+                        <br />
+                        آیا می‌خواهید رکوردهای معتبر به پایگاه داده وارد شوند؟
+                    </p>
+
+                    @if (IsImporting)
+                    {
+                        <div class="mb-2">
+                            <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@ImportProgress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                     style="width:@($"{ImportProgress}%")">
+                                    @ImportProgress%
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-1">@ImportProgressText</small>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            @onclick="CloseModal"
+                            disabled="@IsImporting">
+                        انصراف
+                    </button>
+                    <button type="button"
+                            class="btn btn-danger"
+                            @onclick="ConfirmImport"
+                            disabled="@IsImporting">
+                        @if (IsImporting)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        }
+                        بله، بارگذاری کن
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show" @onclick="() => { if (!IsImporting) CloseModal(); }"></div>
+}
+
 @code {
     private IBrowserFile? _file;
     private List<BudgetRecord>? Records;
     private string? Status;
     private ImportBudgetResultDto? PreviewResult;
 
+    // حالت‌ها
+    private bool ShowConfirmModal;
+    private bool IsPreviewing;
+    private bool IsImporting;
+
+    // Alert موفقیت
+    private bool ShowSuccessAlert;
+    private string? SuccessMessage;
+
+    // Progress بارگذاری
+    private int ImportProgress;
+    private string? ImportProgressText;
+
+    // فعال‌سازی بارگذاری فقط وقتی که حداقل یک رکورد معتبر از Preview داریم
+    private bool CanImport => (PreviewResult?.TotalValid ?? 0) > 0;
+
     private void OnInputFileChange(InputFileChangeEventArgs e)
     {
         _file = e.File;
         Records = null;
         PreviewResult = null;
+
+        // پاک‌سازی وضعیت‌های قبلی
+        ShowConfirmModal = false;
+        IsImporting = false;
+        ImportProgress = 0;
+        ImportProgressText = null;
+        ShowSuccessAlert = false;
+        SuccessMessage = null;
+
         Status = _file != null ? $"فایل انتخاب شد: {_file.Name}" : "فایلی انتخاب نشد.";
     }
 
     private async Task Preview()
     {
-        if (_file == null) return;
+        if (_file == null || IsPreviewing) return;
+
         try
         {
-            Status = "در حال پیش ‌نمایش...";
+            IsPreviewing = true;
+            ShowConfirmModal = false;
+            ShowSuccessAlert = false;
+            Status = "در حال پیش‌نمایش...";
+
             await using var ms = new MemoryStream();
             await _file.OpenReadStream(1024L * 1024 * 64).CopyToAsync(ms);
             ms.Position = 0;
 
             PreviewResult = await ImportUseCase.PreviewAsync(ms);
-            Records = PreviewResult.ValidRecords; // جدول دقیقا با رکوردهای معتبر پر می‌شود
+            Records = PreviewResult.ValidRecords; // جدول دقیقاً با رکوردهای معتبر پر می‌شود
 
-            Status = "پیش‌ نمایش کامل شد.";
+            Status = (PreviewResult.TotalValid > 0)
+                ? "پیش‌نمایش کامل شد. رکوردهای معتبر آمادهٔ بارگذاری هستند."
+                : "پیش‌نمایش کامل شد. رکورد معتبری یافت نشد.";
         }
         catch (Exception ex)
         {
-            Status = $"خطا در پیش‌ نمایش: {ex.Message}";
+            Status = $"خطا در پیش‌نمایش: {ex.Message}";
         }
+        finally
+        {
+            IsPreviewing = false;
+            StateHasChanged();
+        }
+    }
+
+    private void AskImport()
+    {
+        if (!CanImport || _file == null) return;
+        ShowConfirmModal = true;
+        ShowSuccessAlert = false; // هر بار قبل از شروع بارگذاری، Alert قبلی بسته شود
+    }
+
+    private void CloseModal()
+    {
+        if (IsImporting) return;
+        ShowConfirmModal = false;
+    }
+
+    private async Task ConfirmImport()
+    {
+        // مودال باز می‌ماند و دکمه‌ها disable می‌شوند تا عملیات تمام شود
+        await Import();
+        ShowConfirmModal = false; // پس از اتمام، مودال بسته شود
+        StateHasChanged();
     }
 
     private async Task Import()
     {
-        if (_file == null) return;
+        if (_file == null || IsImporting) return;
+
         try
         {
-            Status = "در حال واردسازی...";
+            IsImporting = true;
+            ImportProgress = 0;
+            ImportProgressText = "در حال خواندن فایل...";
+            Status = "در حال بارگذاری...";
+
             await using var ms = new MemoryStream();
-            await _file.OpenReadStream(1024L * 1024 * 64).CopyToAsync(ms);
+            await using var src = _file.OpenReadStream(1024L * 1024 * 64); // 64MB
+            var totalBytes = _file.Size;
+            var buffer = new byte[81920]; // 80KB
+            long totalRead = 0;
+
+            int read;
+            while ((read = await src.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            {
+                await ms.WriteAsync(buffer.AsMemory(0, read));
+                totalRead += read;
+
+                // تا 80% پیشرفت برای مرحله خواندن فایل
+                ImportProgress = (int)Math.Round((totalRead / (double)totalBytes) * 80);
+                StateHasChanged();
+            }
+
             ms.Position = 0;
 
+            // مرحله پردازش
+            ImportProgressText = "در حال پردازش داده‌ها...";
+            ImportProgress = Math.Max(ImportProgress, 85);
+            StateHasChanged();
+
             var result = await ImportUseCase.ImportAsync(ms);
-            // می‌توانید پس از واردسازی، جدول را با همان رکوردهای معتبر یا داده‌های تازه از DB به‌روز کنید
+
+            // اتمام
+            ImportProgress = 100;
+            ImportProgressText = "بارگذاری با موفقیت انجام شد.";
+            StateHasChanged();
+
+            // می‌توانید پس از بارگذاری، از DB دادهٔ جدید بخوانید؛ فعلاً لیست معتبر را نگه می‌داریم
             Records = result.ValidRecords;
 
-            Status = $"واردسازی کامل شد: درج {result.InsertedCount} - به‌روزرسانی {result.UpdatedCount}";
+            Status = $"بارگذاری کامل شد: درج {result.InsertedCount} - به‌روزرسانی {result.UpdatedCount}";
+
+            // Alert موفقیت با انیمیشن نرم
+            SuccessMessage = $"بارگذاری با موفقیت انجام شد. نتیجه: درج {result.InsertedCount} | به‌روزرسانی {result.UpdatedCount}";
+            ShowSuccessAlert = true;
         }
         catch (Exception ex)
         {
-            Status = $"خطا در واردسازی: {ex.Message}";
+            Status = $"خطا در بارگذاری: {ex.Message}";
+            // در صورت نیاز می‌توانید اینجا Alert خطا هم اضافه کنید
+        }
+        finally
+        {
+            IsImporting = false;
+            StateHasChanged();
         }
     }
 }

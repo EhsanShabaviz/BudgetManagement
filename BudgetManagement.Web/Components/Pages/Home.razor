@@ -2,6 +2,97 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<section class="hero d-flex align-items-center">
+    <div class="container">
+        <div class="row g-4 align-items-center">
+            <div class="col-lg-7">
+                <span class="badge badge-soft rounded-pill px-3 py-2 mb-3">
+                    <i class="bi bi-lightning-charge me-1"></i> نسخه 1.0
+                </span>
 
-Welcome to your new app.
+                <h1 class="display-5 fw-bold mb-3">سامانه نظام بودجه و اعتبارات</h1>
+
+                <p class="lead text-secondary mb-4">
+                    📌 این سامانه برای محاسبه آنلاین آیتم‌های بودجه و مالی (شامل: مبلغ تعدیل، حداکثر اعتبار مورد نیاز، کسری اعتبار و ...)
+                    در بازه‌های ماهانه و سالیانه طراحی و پیاده‌سازی شده است.
+                </p>
+
+                <div class="d-flex gap-2">
+                    <a class="btn btn-primary btn-lg" href="#">
+                        <i class="bi bi-box-arrow-in-right ms-1"></i> ورود به سامانه
+                    </a>
+                    @* <a class="btn btn-outline-primary btn-lg" href="#">
+                        <i class="bi bi-play-circle ms-1"></i> مشاهده دمو
+                    </a> *@
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="glass-card p-4 p-md-5">
+                    <div class="d-flex align-items-start gap-3 mb-3">
+                        <div class="icon-wrap">
+                            <i class="bi bi-calculator-fill fs-2"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">محاسبات پویا</h5>
+                            <p class="mb-0 text-secondary small">
+                                محاسبه مبلغ تعدیل، بیشینه اعتبار و کسری اعتبار به‌صورت لحظه‌ای و دقیق.
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="icon-wrap">
+                            <i class="bi bi-graph-up fs-2"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">گزارش‌های دوره‌ای</h5>
+                            <p class="mb-0 text-secondary small">
+                                خروجی ماهانه و سالانه با امکان مقایسه روند و ذخیره‌سازی نتایج.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+
+    /* پس‌زمینه نرم و فاصله‌ها */
+    .hero {
+        min-height: 70vh;
+        background: radial-gradient(1000px 500px at 100% -10%, #e8f0ff 10%, transparent 50%), radial-gradient(800px 400px at -10% 0%, #fff6e6 10%, transparent 50%), linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+        padding: 5rem 0 3rem;
+    }
+
+    /* کارت شیشه‌ای */
+    .glass-card {
+        backdrop-filter: blur(6px);
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        border-radius: 1.25rem;
+    }
+
+    /* بَج نرم */
+    .badge-soft {
+        background: #eef2ff;
+        color: #4338ca;
+        border: 1px solid #e0e7ff;
+    }
+
+    /* آیکن‌ها */
+    .icon-wrap {
+        width: 48px;
+        height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: #f3f4f6;
+    }
+</style>

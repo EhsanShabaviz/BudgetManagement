@@ -3,6 +3,7 @@ using BudgetManagement.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BudgetManagement.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(BudgetManagementDbContext))]
-    partial class BudgetManagementDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250816161157_Update-BudgetRecords")]
+    partial class UpdateBudgetRecords
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

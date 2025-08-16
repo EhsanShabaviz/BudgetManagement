@@ -127,20 +127,20 @@ public class BudgetRecord
     public string? Nature { get; set; }
 
     // Calculated Fields:
-    [DisplayName("افزایش ۲۵ درصد")]
+    /*[DisplayName("افزایش ۲۵ درصد")]
     [Display(Order = 29)]
-    public decimal? Increase25Percent { get; set; }
+    public decimal? Increase25Percent { get; set; }*/
 
     [DisplayName("مبلغ تعدیل")]
-    [Display(Order = 30)]
+    [Display(Order = 29)]
     public decimal? AdjustmentAmount { get; set; }
 
     [DisplayName("حداکثر اعتبار موردنیاز")]
-    [Display(Order = 31)]
+    [Display(Order = 30)]
     public decimal? MaxRequiredCredit { get; set; }
 
     [DisplayName("کسری اعتبار")]
-    [Display(Order = 32)]
+    [Display(Order = 31)]
     public decimal? CreditDeficit { get; set; }
 
     public BudgetRecord(string subProjectCode)
