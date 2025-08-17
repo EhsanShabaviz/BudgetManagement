@@ -16,6 +16,8 @@ builder.Services.AddRazorComponents()
 // Application
 builder.Services.AddScoped<IBudgetImportUseCase, BudgetImportUseCase>();
 builder.Services.AddScoped<BudgetImportValidator>();
+builder.Services.AddScoped<IBudgetCalculationUseCase, BudgetCalculationUseCase>();
+
 
 // Infrastructure Adapters
 builder.Services.AddScoped<IBudgetExcelReader, BudgetExcelReader>();

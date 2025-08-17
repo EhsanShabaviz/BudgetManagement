@@ -51,7 +51,7 @@
     <div class="d-flex justify-content-between align-items-center">
         <div>مجموع: @State.TotalRecords | صفحه @State.CurrentPage از @State.TotalPages</div>
         <div class="btn-group">
-            <button class="btn btn-sm btn-outline-secondary" @onclick="GoToFirst" disabled="@(State.CurrentPage == 1)">⏮ اول</button>
+            <button class="btn btn-sm btn-outline-secondary" @onclick="GoToFirst" disabled="@(State.CurrentPage == 1)">⏭ اول</button>
             <button class="btn btn-sm btn-outline-secondary" @onclick="PrevPage" disabled="@(State.CurrentPage == 1)">قبلی</button>
 
             @for (var i = 1; i <= State.TotalPages; i++)
@@ -64,7 +64,7 @@
             }
 
             <button class="btn btn-sm btn-outline-secondary" @onclick="NextPage" disabled="@(State.CurrentPage == State.TotalPages)">بعدی</button>
-            <button class="btn btn-sm btn-outline-secondary" @onclick="GoToLast" disabled="@(State.CurrentPage == State.TotalPages)">آخر ⏭</button>
+            <button class="btn btn-sm btn-outline-secondary" @onclick="GoToLast" disabled="@(State.CurrentPage == State.TotalPages)">آخر ⏮</button>
         </div>
     </div>
 }
@@ -174,7 +174,7 @@ else
 
         switch (value)
         {
-            case decimal dec: return dec.ToString("#,0.##", CultureInfo.InvariantCulture);
+            case decimal dec: return dec.ToString("#,0", CultureInfo.InvariantCulture);
             case double dbl: return dbl.ToString("#,0.##", CultureInfo.InvariantCulture);
             case float fl: return fl.ToString("#,0.##", CultureInfo.InvariantCulture);
             case long l: return l.ToString("#,0", CultureInfo.InvariantCulture);

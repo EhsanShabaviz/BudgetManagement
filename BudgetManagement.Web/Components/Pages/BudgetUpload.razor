@@ -6,25 +6,41 @@
 @using Microsoft.AspNetCore.Components.Forms
 
 @inject IBudgetImportUseCase ImportUseCase
+@inject IBudgetCalculationUseCase CalculationUseCase
 
+<h3>بارگذاری اطلاعات</h3>
+<div class="card shadow-sm border-0 mb-3" style="direction: rtl; text-align: right;">
+    <div class="card-body bg-light rounded-3">
+        <p class="mb-0" style="font-size: 1.1rem;">
+            📌 لطفاً فایل اکسل اطلاعات کنترل پروژه را با فرمت استاندارد بارگذاری کنید.
+        </p>
+    </div>
+</div>
 
-
-<h3>Budget Upload</h3>
 
 <div class="d-flex gap-2 align-items-center mb-2">
     <InputFile OnChange="OnInputFileChange" accept=".xlsx,.xls" />
-    @* <span class="text-muted">@Status</span> *@
 </div>
 
 <div class="d-flex gap-2 mb-2">
     <button class="btn btn-secondary"
             @onclick="Preview"
-            disabled="@(_file == null || IsPreviewing)">
+            disabled="@(_file == null || IsPreviewing || IsPreviewDisabled)">
         @if (IsPreviewing)
         {
             <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
         }
         پیش‌نمایش
+    </button>
+
+    <button class="btn btn-warning"
+            @onclick="CalculateCredit"
+            disabled="@(!CanCalculate || IsCalculating)">
+        @if (IsCalculating)
+        {
+            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+        }
+        محاسبه اعتبار
     </button>
 
     <button class="btn btn-primary"
@@ -63,11 +79,17 @@
     }
 }
 
+@if (CalculationDone)
+{
+    <div class="alert alert-success mt-2">
+        محاسبات انجام شد. حالا می‌توانید رکوردها را بارگذاری کنید.
+    </div>
+}
+
 <hr />
 
 <BudgetTable Records="Records" />
 
-@* ===== Modal تأیید بارگذاری (Bootstrap) ===== *@
 @if (ShowConfirmModal)
 {
     <div class="modal fade show" tabindex="-1" role="dialog" style="display:block;" aria-modal="true">
@@ -127,39 +149,40 @@
 @code {
     private IBrowserFile? _file;
     private List<BudgetRecord>? Records;
-    private string? Status;
     private ImportBudgetResultDto? PreviewResult;
 
-    // حالت‌ها
     private bool ShowConfirmModal;
     private bool IsPreviewing;
     private bool IsImporting;
+    private bool IsCalculating;
+    private bool CalculationDone;
+    private bool IsPreviewDisabled; // کنترل غیرفعال بودن دکمه پیش‌نمایش
 
-    // Alert موفقیت
+
     private bool ShowSuccessAlert;
     private string? SuccessMessage;
+    private string? Status;
 
-    // Progress بارگذاری
     private int ImportProgress;
     private string? ImportProgressText;
 
-    // فعال‌سازی بارگذاری فقط وقتی که حداقل یک رکورد معتبر از Preview داریم
-    private bool CanImport => (PreviewResult?.TotalValid ?? 0) > 0;
+    private bool CanCalculate => Records?.Any() == true;
+    private bool CanImport => CalculationDone && (PreviewResult?.TotalValid ?? 0) > 0;
 
     private void OnInputFileChange(InputFileChangeEventArgs e)
     {
         _file = e.File;
         Records = null;
         PreviewResult = null;
-
-        // پاک‌سازی وضعیت‌های قبلی
         ShowConfirmModal = false;
         IsImporting = false;
+        IsCalculating = false;
+        CalculationDone = false;
         ImportProgress = 0;
         ImportProgressText = null;
         ShowSuccessAlert = false;
         SuccessMessage = null;
-
+        IsPreviewDisabled = false; // با انتخاب فایل جدید دوباره فعال می‌شود
         Status = _file != null ? $"فایل انتخاب شد: {_file.Name}" : "فایلی انتخاب نشد.";
     }
 
@@ -179,10 +202,10 @@
             ms.Position = 0;
 
             PreviewResult = await ImportUseCase.PreviewAsync(ms);
-            Records = PreviewResult.ValidRecords; // جدول دقیقاً با رکوردهای معتبر پر می‌شود
+            Records = PreviewResult.ValidRecords;
 
             Status = (PreviewResult.TotalValid > 0)
-                ? "پیش‌نمایش کامل شد. رکوردهای معتبر آمادهٔ بارگذاری هستند."
+                ? "پیش‌نمایش کامل شد. رکوردهای معتبر آمادهٔ محاسبه اعتبار هستند."
                 : "پیش‌نمایش کامل شد. رکورد معتبری یافت نشد.";
         }
         catch (Exception ex)
@@ -196,11 +219,41 @@
         }
     }
 
+    private async Task CalculateCredit()
+    {
+        if (Records == null || IsCalculating) return;
+
+        try
+        {
+            IsCalculating = true;
+            IsPreviewDisabled = true; //از لحظه شروع محاسبه، پیش‌نمایش غیرفعال شود
+            Status = "در حال محاسبه اعتبار...";
+
+            await CalculationUseCase.CalculateAsync(Records);
+
+            CalculationDone = true;
+            Status = "محاسبه اعتبار با موفقیت انجام شد.";
+
+            // 🔄 رفرش جدول با داده‌های جدید
+            Records = Records.Select(r => r).ToList(); // ایجاد لیست جدید برای تحریک رندر
+            StateHasChanged(); // رفرش UI
+        }
+        catch (Exception ex)
+        {
+            Status = $"خطا در محاسبه اعتبار: {ex.Message}";
+        }
+        finally
+        {
+            IsCalculating = false;
+        }
+    }
+
+
     private void AskImport()
     {
         if (!CanImport || _file == null) return;
         ShowConfirmModal = true;
-        ShowSuccessAlert = false; // هر بار قبل از شروع بارگذاری، Alert قبلی بسته شود
+        ShowSuccessAlert = false;
     }
 
     private void CloseModal()
@@ -211,13 +264,12 @@
 
     private async Task ConfirmImport()
     {
-        // مودال باز می‌ماند و دکمه‌ها disable می‌شوند تا عملیات تمام شود
-        await Import();
-        ShowConfirmModal = false; // پس از اتمام، مودال بسته شود
+        await ImportAsync();
+        ShowConfirmModal = false;
         StateHasChanged();
     }
 
-    private async Task Import()
+    private async Task ImportAsync()
     {
         if (_file == null || IsImporting) return;
 
@@ -229,9 +281,9 @@
             Status = "در حال بارگذاری...";
 
             await using var ms = new MemoryStream();
-            await using var src = _file.OpenReadStream(1024L * 1024 * 64); // 64MB
+            await using var src = _file.OpenReadStream(1024L * 1024 * 64);
             var totalBytes = _file.Size;
-            var buffer = new byte[81920]; // 80KB
+            var buffer = new byte[81920];
             long totalRead = 0;
 
             int read;
@@ -240,7 +292,7 @@
                 await ms.WriteAsync(buffer.AsMemory(0, read));
                 totalRead += read;
 
-                // تا 80% پیشرفت برای مرحله خواندن فایل
+                // تا 80٪ پیشرفت برای مرحله خواندن فایل
                 ImportProgress = (int)Math.Round((totalRead / (double)totalBytes) * 80);
                 StateHasChanged();
             }
@@ -252,26 +304,32 @@
             ImportProgress = Math.Max(ImportProgress, 85);
             StateHasChanged();
 
-            var result = await ImportUseCase.ImportAsync(ms);
+            var result = await ImportUseCase.ImportAsync(Records!);
 
             // اتمام
             ImportProgress = 100;
             ImportProgressText = "بارگذاری با موفقیت انجام شد.";
             StateHasChanged();
 
-            // می‌توانید پس از بارگذاری، از DB دادهٔ جدید بخوانید؛ فعلاً لیست معتبر را نگه می‌داریم
-            Records = result.ValidRecords;
-
-            Status = $"بارگذاری کامل شد: درج {result.InsertedCount} - به‌روزرسانی {result.UpdatedCount}";
-
-            // Alert موفقیت با انیمیشن نرم
             SuccessMessage = $"بارگذاری با موفقیت انجام شد. نتیجه: درج {result.InsertedCount} | به‌روزرسانی {result.UpdatedCount}";
             ShowSuccessAlert = true;
+
+            // ✅ پاک‌سازی صفحه و حافظه
+            Records = null;
+            PreviewResult = null;
+            CalculationDone = false;
+            ShowConfirmModal = false;
+            IsPreviewing = false;
+            IsCalculating = false;
+            ImportProgress = 0;
+            ImportProgressText = null;
+            IsPreviewDisabled = false; // بعد از اتمام بارگذاری، برای فایل جدید فعال می‌شود
+            Status = "فایل قبلی با موفقیت بارگذاری شد. لطفاً فایل جدید انتخاب کنید.";
+            _file = null; // ریست فایل انتخاب‌شده
         }
         catch (Exception ex)
         {
             Status = $"خطا در بارگذاری: {ex.Message}";
-            // در صورت نیاز می‌توانید اینجا Alert خطا هم اضافه کنید
         }
         finally
         {
@@ -279,4 +337,5 @@
             StateHasChanged();
         }
     }
+
 }

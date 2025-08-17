@@ -139,5 +139,63 @@ namespace BudgetManagement.Application.UseCases
             target.CreditNumber = src.CreditNumber;
             target.Nature = src.Nature;
         }
+
+
+        public async Task<ImportBudgetResultDto> ImportAsync(List<BudgetRecord> records, CancellationToken ct = default)
+        {
+            var result = new ImportBudgetResultDto
+            {
+                TotalParsed = records.Count
+            };
+
+            // اعتبارسنجی رکوردها
+            var validation = await _validator.ValidateAsync(records, ct);
+            result.Errors.AddRange(validation.Errors);
+            result.ValidRecords = validation.ValidRecords;
+            result.TotalValid = validation.ValidRecords.Count;
+
+            if (validation.ValidRecords.Any())
+            {
+                var codes = validation.ValidRecords
+                    .Select(r => r.SubProjectCode)
+                    .Where(c => !string.IsNullOrWhiteSpace(c))
+                    .Distinct()
+                    .ToList();
+
+                var existingMap = await _repository.GetBySubProjectCodesAsync(codes, ct);
+
+                var toCreate = new List<BudgetRecord>();
+                var toUpdate = new List<BudgetRecord>();
+
+                foreach (var rec in validation.ValidRecords)
+                {
+                    if (string.IsNullOrWhiteSpace(rec.SubProjectCode)) continue;
+
+                    if (!existingMap.TryGetValue(rec.SubProjectCode, out var existing))
+                    {
+                        toCreate.Add(rec);
+                    }
+                    else
+                    {
+                        ApplyUpdate(existing, rec);
+                        toUpdate.Add(existing);
+                    }
+                }
+
+                if (toCreate.Count > 0)
+                    await _repository.AddRangeAsync(toCreate, ct);
+
+                if (toUpdate.Count > 0)
+                    await _repository.UpdateRangeAsync(toUpdate, ct);
+
+                await _repository.SaveChangesAsync(ct);
+
+                result.InsertedCount = toCreate.Count;
+                result.UpdatedCount = toUpdate.Count;
+            }
+
+            return result;
+        }
+
     }
 }

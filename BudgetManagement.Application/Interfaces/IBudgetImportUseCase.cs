@@ -1,7 +1,8 @@
-﻿using System.IO;
+﻿using BudgetManagement.Application.DTOs.Budget;
+using BudgetManagement.Domain.Entities;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using BudgetManagement.Application.DTOs.Budget;
 
 namespace BudgetManagement.Application.Interfaces
 {
@@ -9,5 +10,8 @@ namespace BudgetManagement.Application.Interfaces
     {
         Task<ImportBudgetResultDto> PreviewAsync(Stream excelStream, CancellationToken ct = default);
         Task<ImportBudgetResultDto> ImportAsync(Stream excelStream, CancellationToken ct = default);
+
+        // ✅ امضای جدید برای بارگذاری داده‌های محاسبه‌شده
+        Task<ImportBudgetResultDto> ImportAsync(List<BudgetRecord> records, CancellationToken ct = default);
     }
 }
