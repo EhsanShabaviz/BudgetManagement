@@ -42,8 +42,8 @@ namespace BudgetManagement.Application.Validators
             {
                 if (r.TotalContractAmount < 0 ||
                     r.InitialAmount < 0 ||
-                    r.CurrentYearCashCredit < 0 ||
-                    r.CurrentYearNonCashCredit < 0 ||
+                    //r.CurrentYearCashCredit < 0 ||
+                    //r.CurrentYearNonCashCredit < 0 ||
                     r.CurrentYearTotalCredit < 0 ||
                     r.TotalCreditFromStart < 0 ||
                     r.TotalInvoicesAmount < 0 ||
@@ -61,8 +61,8 @@ namespace BudgetManagement.Application.Validators
             var numericErrorCodes = list
                 .Where(r => r.TotalContractAmount < 0 ||
                             r.InitialAmount < 0 ||
-                            r.CurrentYearCashCredit < 0 ||
-                            r.CurrentYearNonCashCredit < 0 ||
+                            //r.CurrentYearCashCredit < 0 ||
+                            //r.CurrentYearNonCashCredit < 0 ||
                             r.CurrentYearTotalCredit < 0 ||
                             r.TotalCreditFromStart < 0 ||
                             r.TotalInvoicesAmount < 0 ||

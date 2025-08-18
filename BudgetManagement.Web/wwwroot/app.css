@@ -1,5 +1,5 @@
 html, body {
-    font-family: system-ui, -apple-system, "Vazirmatn", "IRANSans", Segoe UI, Roboto,'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: "Vazirmatn", "IRANSans",system-ui, -apple-system, Segoe UI, Roboto,'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 :root {
@@ -114,4 +114,31 @@ h1:focus {
     .alert-soft-enter {
         animation: none !important;
     }
+}
+
+.highlight-cell {
+    background-color: #fff3cd !important; /* زرد ملایم */
+    font-weight: bold;
+    color: #856404;
+}
+
+.sortable {
+    cursor: pointer;
+}
+
+    .sortable.asc::after {
+        content: " 🔼";
+    }
+
+    .sortable.desc::after {
+        content: " 🔽";
+    }
+
+.center-cell {
+    vertical-align: middle !important;
+}
+
+.table thead th {
+    background-color: #57A7FF;
+    color: white; 
 }

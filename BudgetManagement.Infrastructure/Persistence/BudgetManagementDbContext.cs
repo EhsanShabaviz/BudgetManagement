@@ -37,25 +37,25 @@ namespace BudgetManagement.Infrastructure.Persistence
                 entity.Property(e => e.ContractDate).HasMaxLength(50);
                 entity.Property(e => e.Contractor).HasMaxLength(250);
                 entity.Property(e => e.Agent).HasMaxLength(250);
-                entity.Property(e => e.CompanyType).HasMaxLength(250);
-                entity.Property(e => e.AgentContractNumber).HasMaxLength(250);
-                entity.Property(e => e.AgentContractDate).HasMaxLength(50);
-                entity.Property(e => e.ExecutionType).HasMaxLength(250);
+                //entity.Property(e => e.CompanyType).HasMaxLength(250);
+                //entity.Property(e => e.AgentContractNumber).HasMaxLength(250);
+                //entity.Property(e => e.AgentContractDate).HasMaxLength(50);
+                //entity.Property(e => e.ExecutionType).HasMaxLength(250);
                 entity.Property(e => e.ContractStatus).HasMaxLength(250);
                 entity.Property(e => e.ExecutiveDept).HasMaxLength(250);
-                entity.Property(e => e.ResponsibleDept).HasMaxLength(250);
+                //entity.Property(e => e.ResponsibleDept).HasMaxLength(250);
                 entity.Property(e => e.StartDate).HasMaxLength(50);
                 entity.Property(e => e.EndDate).HasMaxLength(50);
                 entity.Property(e => e.ExtendedEndDate).HasMaxLength(50);
-                entity.Property(e => e.ActivityType).HasMaxLength(250);
+                //entity.Property(e => e.ActivityType).HasMaxLength(250);
                 entity.Property(e => e.WorkReferralMethod).HasMaxLength(250);
                 entity.Property(e => e.CreditNumber).HasMaxLength(250);
                 entity.Property(e => e.Nature).HasMaxLength(250);
 
                 entity.Property(e => e.TotalContractAmount).HasColumnType("decimal(18,0)").IsRequired(false);
                 entity.Property(e => e.InitialAmount).HasColumnType("decimal(18,0)").IsRequired(false);
-                entity.Property(e => e.CurrentYearCashCredit).HasColumnType("decimal(18,0)").IsRequired(false);
-                entity.Property(e => e.CurrentYearNonCashCredit).HasColumnType("decimal(18,0)").IsRequired(false);
+                //entity.Property(e => e.CurrentYearCashCredit).HasColumnType("decimal(18,0)").IsRequired(false);
+                //entity.Property(e => e.CurrentYearNonCashCredit).HasColumnType("decimal(18,0)").IsRequired(false);
                 entity.Property(e => e.CurrentYearTotalCredit).HasColumnType("decimal(18,0)").IsRequired(false);
                 entity.Property(e => e.TotalCreditFromStart).HasColumnType("decimal(18,0)").IsRequired(false);
                 entity.Property(e => e.TotalInvoicesAmount).HasColumnType("decimal(18,0)").IsRequired(false);
@@ -64,7 +64,8 @@ namespace BudgetManagement.Infrastructure.Persistence
                 //entity.Property(e => e.Increase25Percent).HasColumnType("decimal(18,0)").IsRequired(false);
                 entity.Property(e => e.AdjustmentAmount).HasColumnType("decimal(18,0)").IsRequired(false);
                 entity.Property(e => e.MaxRequiredCredit).HasColumnType("decimal(18,0)").IsRequired(false);
-                entity.Property(e => e.CreditDeficit).HasColumnType("decimal(18,0)").IsRequired(false);
+                entity.Property(e => e.CreditDeficitSupply).HasColumnType("decimal(18,0)").IsRequired(false);
+                entity.Property(e => e.CreditDeficitCommitment).HasColumnType("decimal(18,0)").IsRequired(false);
 
             });
         }

@@ -23,12 +23,13 @@ namespace BudgetManagement.Application.UseCases
                 if (record.MaxRequiredCredit.HasValue && record.TotalCreditFromStart.HasValue)
                     record.CreditDeficit = record.MaxRequiredCredit.Value - record.TotalCreditFromStart.Value;
             }*/
-
+            
             foreach (var r in records)
             {
                 r.AdjustmentAmount = (r.TotalInvoicesAmount ?? 0) - (r.TotalWorkProgress ?? 0);
                 r.MaxRequiredCredit = (r.TotalContractAmount ?? 0) * 1.1m + (r.AdjustmentAmount ?? 0);
-                r.CreditDeficit = (r.MaxRequiredCredit ?? 0) - (r.TotalCreditFromStart ?? 0);
+                r.CreditDeficitSupply = (r.MaxRequiredCredit ?? 0) - (r.TotalCreditFromStart ?? 0);
+                r.CreditDeficitCommitment = (r.MaxRequiredCredit ?? 0) - (r.TotalInvoicesAmount ?? 0);
             }
 
             return Task.CompletedTask;

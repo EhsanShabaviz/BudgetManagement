@@ -34,7 +34,7 @@ public class BudgetRecord
     [Display(Order = 5)]
     public string? Agent { get; set; }
 
-    [DisplayName("نوع شرکت")]
+    /*[DisplayName("نوع شرکت")]
     [Display(Order = 6)]
     public string? CompanyType { get; set; }
 
@@ -48,7 +48,7 @@ public class BudgetRecord
 
     [DisplayName("نحوه اجرا")]
     [Display(Order = 9)]
-    public string? ExecutionType { get; set; }
+    public string? ExecutionType { get; set; }*/
 
     [DisplayName("وضعیت قرارداد")]
     [Display(Order = 10)]
@@ -62,13 +62,13 @@ public class BudgetRecord
     [Display(Order = 12)]
     public decimal? InitialAmount { get; set; }
 
-    [DisplayName("تامین اعتبار نقدی سال جاری")]
+    /*[DisplayName("تامین اعتبار نقدی سال جاری")]
     [Display(Order = 13)]
     public decimal? CurrentYearCashCredit { get; set; }
 
     [DisplayName("تامین اعتبار غیرنقدی سال جاری")]
     [Display(Order = 14)]
-    public decimal? CurrentYearNonCashCredit { get; set; }
+    public decimal? CurrentYearNonCashCredit { get; set; }*/
 
     [DisplayName("مبلغ کل تامین اعتبار سال جاری")]
     [Display(Order = 15)]
@@ -82,9 +82,9 @@ public class BudgetRecord
     [Display(Order = 17)]
     public string? ExecutiveDept { get; set; }
 
-    [DisplayName("معاونت متولی")]
+    /*[DisplayName("معاونت متولی")]
     [Display(Order = 18)]
-    public string? ResponsibleDept { get; set; }
+    public string? ResponsibleDept { get; set; }*/
 
     [DisplayName("تاریخ شروع")]
     [Display(Order = 19)]
@@ -98,9 +98,9 @@ public class BudgetRecord
     [Display(Order = 21)]
     public string? ExtendedEndDate { get; set; }
 
-    [DisplayName("نوع فعالیت")]
+    /*[DisplayName("نوع فعالیت")]
     [Display(Order = 22)]
-    public string? ActivityType { get; set; }
+    public string? ActivityType { get; set; }*/
 
     [DisplayName("نحوه ارجاع کار")]
     [Display(Order = 23)]
@@ -132,16 +132,24 @@ public class BudgetRecord
     public decimal? Increase25Percent { get; set; }*/
 
     [DisplayName("مبلغ تعدیل")]
-    [Display(Order = 29)]
+    [Display(Order = 30)]
     public decimal? AdjustmentAmount { get; set; }
 
     [DisplayName("حداکثر اعتبار موردنیاز")]
-    [Display(Order = 30)]
+    [Display(Order = 31)]
     public decimal? MaxRequiredCredit { get; set; }
 
-    [DisplayName("کسری اعتبار")]
-    [Display(Order = 31)]
-    public decimal? CreditDeficit { get; set; }
+    /*[DisplayName("کسری اعتبار")]
+    [Display(Order = 32)]
+    public decimal? CreditDeficit { get; set; }*/
+
+    [DisplayName("کسری اعتبار تامین")]
+    [Display(Order = 33)]
+    public decimal? CreditDeficitSupply { get; set; }
+
+    [DisplayName("کسری اعتبار تعهد")]
+    [Display(Order = 34)]
+    public decimal? CreditDeficitCommitment { get; set; }
 
     public BudgetRecord(string subProjectCode)
     {

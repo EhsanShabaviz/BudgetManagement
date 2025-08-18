@@ -6,24 +6,21 @@
 @using BudgetManagement.Web.Common.Models
 @using BudgetManagement.Web.Common.Services
 
-
 @if (Records is not null && Records.Any())
 {
     var props = GetVisibleProperties();
-
-    // دادهٔ اعمال‌شده (Sort + Paging)
     var sorted = TableSortService.Sort(Records, State.SortColumn, State.SortAscending);
     State.TotalRecords = Records.Count;
     var pageItems = TablePaginationService.Paginate(sorted, State.CurrentPage, State.PageSize).ToList();
 
-    <table class="table table-striped table-bordered table-sm">
+    <table class="table table-striped table-bordered table-sm text-center">
         <thead>
             <tr>
-                <th style="width:72px;">ردیف</th>
+                <th style="width:72px;" class="text-center center-cell">ردیف</th>
                 @foreach (var prop in props)
                 {
                     var header = GetHeader(prop);
-                    <th class="@GetSortClass(prop.Name)"
+                    <th class="@GetSortClass(prop.Name) text-center center-cell"
                         @onclick="() => ChangeSort(prop.Name)">
                         @header
                     </th>
@@ -37,16 +34,20 @@
                 var rowIndex = (State.CurrentPage - 1) * State.PageSize + i + 1;
 
                 <tr>
-                    <td>@rowIndex</td>
+                    <td class="text-center center-cell">@rowIndex</td>
                     @foreach (var prop in props)
                     {
                         var value = prop.GetValue(rec);
-                        <td>@FormatCell(value, prop.PropertyType)</td>
+                        <td class="text-center center-cell @(HighlightedColumns.Contains(prop.Name) ? "highlight-cell" : "")">
+                            @FormatCell(value, prop.PropertyType)
+                        </td>
                     }
                 </tr>
             }
         </tbody>
     </table>
+
+
 
     <div class="d-flex justify-content-between align-items-center">
         <div>مجموع: @State.TotalRecords | صفحه @State.CurrentPage از @State.TotalPages</div>
@@ -56,11 +57,11 @@
 
             @for (var i = 1; i <= State.TotalPages; i++)
             {
-                var pageNumber = i; // فریز مقدار صفحه برای هر دکمه
-                                    <button class="btn btn-sm @(pageNumber == State.CurrentPage ? "btn-primary" : "btn-outline-primary")"
-                                            @onclick="() => GoToPage(pageNumber)">
-                                        @pageNumber
-                                    </button>
+                var pageNumber = i;
+                <button class="btn btn-sm @(pageNumber == State.CurrentPage ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => GoToPage(pageNumber)">
+                    @pageNumber
+                </button>
             }
 
             <button class="btn btn-sm btn-outline-secondary" @onclick="NextPage" disabled="@(State.CurrentPage == State.TotalPages)">بعدی</button>
@@ -73,11 +74,21 @@ else
     <div class="alert alert-info">هیچ رکوردی برای نمایش وجود ندارد.</div>
 }
 
+
+
 @code {
     [Parameter]
     public List<BudgetRecord>? Records { get; set; }
 
     private TableState State { get; set; } = new() { PageSize = 10 };
+
+    private static readonly string[] HighlightedColumns = new[]
+    {
+        "AdjustmentAmount",
+        "MaxRequiredCredit",
+        "CreditDeficitSupply",
+        "CreditDeficitCommitment"
+    };
 
     private void ChangeSort(string column)
     {
@@ -88,7 +99,7 @@ else
             State.SortColumn = column;
             State.SortAscending = true;
         }
-        State.ResetPaging(); // با تغییر Sort از صفحه ۱ شروع کن
+        State.ResetPaging();
         StateHasChanged();
     }
 
@@ -125,8 +136,6 @@ else
         State.CurrentPage = p;
         StateHasChanged();
     }
-
-    // ======= متدهای کمکی برای هدر و قالب‌بندی =======
 
     private static List<PropertyInfo> GetVisibleProperties()
     {
@@ -172,18 +181,18 @@ else
             return s;
         }
 
-        switch (value)
+        return value switch
         {
-            case decimal dec: return dec.ToString("#,0", CultureInfo.InvariantCulture);
-            case double dbl: return dbl.ToString("#,0.##", CultureInfo.InvariantCulture);
-            case float fl: return fl.ToString("#,0.##", CultureInfo.InvariantCulture);
-            case long l: return l.ToString("#,0", CultureInfo.InvariantCulture);
-            case int i: return i.ToString("#,0", CultureInfo.InvariantCulture);
-            case short sh: return sh.ToString("#,0", CultureInfo.InvariantCulture);
-            case bool b: return b ? "بله" : "خیر";
-            case Enum e: return e.ToString();
-        }
-        return value.ToString() ?? "-";
+            decimal dec => dec.ToString("#,0", CultureInfo.InvariantCulture),
+            double dbl => dbl.ToString("#,0.##", CultureInfo.InvariantCulture),
+            float fl => fl.ToString("#,0.##", CultureInfo.InvariantCulture),
+            long l => l.ToString("#,0", CultureInfo.InvariantCulture),
+            int i => i.ToString("#,0", CultureInfo.InvariantCulture),
+            short sh => sh.ToString("#,0", CultureInfo.InvariantCulture),
+            bool b => b ? "بله" : "خیر",
+            Enum e => e.ToString(),
+            _ => value.ToString() ?? "-"
+        };
     }
 
     private static bool TryParseDate(string input, out DateTime date)

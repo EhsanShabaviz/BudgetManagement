@@ -86,23 +86,23 @@ namespace BudgetManagement.Infrastructure.Services.Excel
 
                     // تاریخ‌ها به‌صورت رشته yyyy-MM-dd
                     ContractDate = GetCellDateString(row, headerMap, "ContractDate"),
-                    AgentContractDate = GetCellDateString(row, headerMap, "AgentContractDate"),
+                    //AgentContractDate = GetCellDateString(row, headerMap, "AgentContractDate"),
                     StartDate = GetCellDateString(row, headerMap, "StartDate"),
                     EndDate = GetCellDateString(row, headerMap, "EndDate"),
                     ExtendedEndDate = GetCellDateString(row, headerMap, "ExtendedEndDate"),
 
                     Contractor = GetCellString(row, headerMap, "Contractor"),
                     Agent = GetCellString(row, headerMap, "Agent"),
-                    CompanyType = GetCellString(row, headerMap, "CompanyType"),
-                    AgentContractNumber = GetCellString(row, headerMap, "AgentContractNumber"),
-                    ExecutionType = GetCellString(row, headerMap, "ExecutionType"),
+                    //CompanyType = GetCellString(row, headerMap, "CompanyType"),
+                    //AgentContractNumber = GetCellString(row, headerMap, "AgentContractNumber"),
+                    //ExecutionType = GetCellString(row, headerMap, "ExecutionType"),
                     ContractStatus = GetCellString(row, headerMap, "ContractStatus"),
 
                     // اعداد و درصدها
                     TotalContractAmount = GetCellDecimal(row, headerMap, "TotalContractAmount"),
                     InitialAmount = GetCellDecimal(row, headerMap, "InitialAmount"),
-                    CurrentYearCashCredit = GetCellDecimal(row, headerMap, "CurrentYearCashCredit"),
-                    CurrentYearNonCashCredit = GetCellDecimal(row, headerMap, "CurrentYearNonCashCredit"),
+                    //CurrentYearCashCredit = GetCellDecimal(row, headerMap, "CurrentYearCashCredit"),
+                    //CurrentYearNonCashCredit = GetCellDecimal(row, headerMap, "CurrentYearNonCashCredit"),
                     CurrentYearTotalCredit = GetCellDecimal(row, headerMap, "CurrentYearTotalCredit"),
                     TotalCreditFromStart = GetCellDecimal(row, headerMap, "TotalCreditFromStart"),
                     TotalInvoicesAmount = GetCellDecimal(row, headerMap, "TotalInvoicesAmount"),
@@ -110,8 +110,8 @@ namespace BudgetManagement.Infrastructure.Services.Excel
                     CurrentYearInvoicesAmount = GetCellDecimal(row, headerMap, "CurrentYearInvoicesAmount"),
 
                     ExecutiveDept = GetCellString(row, headerMap, "ExecutiveDept"),
-                    ResponsibleDept = GetCellString(row, headerMap, "ResponsibleDept"),
-                    ActivityType = GetCellString(row, headerMap, "ActivityType"),
+                    //ResponsibleDept = GetCellString(row, headerMap, "ResponsibleDept"),
+                    //ActivityType = GetCellString(row, headerMap, "ActivityType"),
                     WorkReferralMethod = GetCellString(row, headerMap, "WorkReferralMethod"),
                     CreditNumber = GetCellString(row, headerMap, "CreditNumber"),
                     Nature = GetCellString(row, headerMap, "Nature"),

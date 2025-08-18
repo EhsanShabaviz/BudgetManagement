@@ -26,26 +26,10 @@ namespace BudgetManagement.Infrastructure.Persistence.Migrations
                     b.Property<string>("SubProjectCode")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("ActivityType")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
-
                     b.Property<decimal?>("AdjustmentAmount")
                         .HasColumnType("decimal(18,0)");
 
                     b.Property<string>("Agent")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
-
-                    b.Property<string>("AgentContractDate")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("AgentContractNumber")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
-
-                    b.Property<string>("CompanyType")
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
 
@@ -70,20 +54,17 @@ namespace BudgetManagement.Infrastructure.Persistence.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
 
-                    b.Property<decimal?>("CreditDeficit")
+                    b.Property<decimal?>("CreditDeficitCommitment")
+                        .HasColumnType("decimal(18,0)");
+
+                    b.Property<decimal?>("CreditDeficitSupply")
                         .HasColumnType("decimal(18,0)");
 
                     b.Property<string>("CreditNumber")
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
 
-                    b.Property<decimal?>("CurrentYearCashCredit")
-                        .HasColumnType("decimal(18,0)");
-
                     b.Property<decimal?>("CurrentYearInvoicesAmount")
-                        .HasColumnType("decimal(18,0)");
-
-                    b.Property<decimal?>("CurrentYearNonCashCredit")
                         .HasColumnType("decimal(18,0)");
 
                     b.Property<decimal?>("CurrentYearTotalCredit")
@@ -92,10 +73,6 @@ namespace BudgetManagement.Infrastructure.Persistence.Migrations
                     b.Property<string>("EndDate")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("ExecutionType")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
 
                     b.Property<string>("ExecutiveDept")
                         .HasMaxLength(250)
@@ -112,10 +89,6 @@ namespace BudgetManagement.Infrastructure.Persistence.Migrations
                         .HasColumnType("decimal(18,0)");
 
                     b.Property<string>("Nature")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
-
-                    b.Property<string>("ResponsibleDept")
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
 
