@@ -49,10 +49,14 @@ namespace BudgetManagement.Infrastructure.Repositories
 
         public async Task DeleteBySubProjectCodeAsync(string subProjectCode, CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrWhiteSpace(subProjectCode))
+                return;
+
             var entity = await GetBySubProjectCodeAsync(subProjectCode, cancellationToken);
             if (entity != null)
             {
                 _db.BudgetRecords.Remove(entity);
+                //await _db.SaveChangesAsync(cancellationToken);//ESH
             }
         }
 

@@ -109,7 +109,7 @@ namespace BudgetManagement.Application.UseCases
 
         private static void ApplyUpdate(BudgetRecord target, BudgetRecord src)
         {
-            // کلید را تغییر نده
+            // کلید را تغییر نکند
             target.ContractTitle = src.ContractTitle;
             target.ContractNumber = src.ContractNumber;
             target.ContractDate = src.ContractDate;

@@ -1,0 +1,122 @@
+﻿@* @page "/BudgetEditForm/{SubProjectCode:string}" *@
+@page "/BudgetEditForm/{SubProjectCode}"
+@using BudgetManagement.Domain.Entities
+@using BudgetManagement.Application.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject IBudgetRepository BudgetRepository
+@inject NavigationManager Nav
+
+<h4 class="mb-3">ویرایش رکورد بودجه</h4>
+
+@if (isLoading)
+{
+    <div class="alert alert-info">در حال بارگذاری...</div>
+}
+else if (notFound)
+{
+    <div class="alert alert-warning">
+        رکوردی با کد زیرپروژه <strong>@SubProjectCode</strong> پیدا نشد.
+        <button class="btn btn-sm btn-outline-primary ms-2" @onclick="GoBack">بازگشت</button>
+    </div>
+}
+else if (model is not null)
+{
+    <EditForm Model="model" OnValidSubmit="HandleSaveAsync">
+        @* <EditForm Model="model" OnValidSubmit="@HandleSaveAsync"> *@
+
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">کد زیرپروژه</label>
+                @* <InputText @bind-Value="model.SubProjectCode" class="form-control" disabled /> *@
+                <InputText Value="model.SubProjectCode" class="form-control" disabled />
+                <div class="form-text">این فیلد قابل تغییر نیست.</div>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">عنوان قرارداد</label>
+                <InputText @bind-Value="model.ContractTitle" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">شماره قرارداد</label>
+                <InputText @bind-Value="model.ContractNumber" class="form-control" />
+            </div>
+
+
+
+            @* در صورت نیاز، فیلدهای دیگر BudgetRecord را نیز اینجا اضافه کن *@
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                @(isSaving ? "در حال ذخیره..." : "ذخیره")
+            </button>
+            <button type="button" class="btn btn-outline-secondary" @onclick="GoBack" disabled="@isSaving">انصراف</button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(message))
+        {
+            <div class="alert alert-success mt-3">@message</div>
+        }
+    </EditForm>
+}
+
+@code {
+    [Parameter] public string? SubProjectCode { get; set; } // با route سازگار است (حساس به حروف نیست)
+
+    private BudgetRecord? model;
+    private bool isLoading = true;
+    private bool notFound = false;
+    private bool isSaving = false;
+    private string? message;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+        notFound = false;
+        message = null;
+
+        if (string.IsNullOrWhiteSpace(SubProjectCode))
+        {
+            notFound = true;
+            isLoading = false;
+            return;
+        }
+
+        model = await BudgetRepository.GetBySubProjectCodeAsync(SubProjectCode!);
+        notFound = model is null;
+        isLoading = false;
+    }
+
+    private async Task HandleSaveAsync()
+    {
+        if (model is null) return;
+
+        try
+        {
+            isSaving = true;
+
+            await BudgetRepository.UpdateAsync(model);
+            await BudgetRepository.SaveChangesAsync();
+
+            message = "تغییرات با موفقیت ذخیره شد.";
+            // در صورت تمایل: بازگشت خودکار بعد از چند ثانیه
+            await Task.Delay(800);
+            Nav.NavigateTo("/BudgetEdit");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/BudgetEdit");
+    }
+}

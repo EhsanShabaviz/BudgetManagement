@@ -5,6 +5,8 @@
 @using BudgetManagement.Domain.Entities
 @using BudgetManagement.Web.Common.Models
 @using BudgetManagement.Web.Common.Services
+@using Microsoft.AspNetCore.Components
+@inject NavigationManager NavManager
 
 @if (Records is not null && Records.Any())
 {
@@ -17,6 +19,12 @@
         <thead>
             <tr>
                 <th style="width:72px;" class="text-center center-cell">ردیف</th>
+
+                @if (ShowActions)
+                {
+                    <th style="width:140px;" class="text-center center-cell">عملیات</th>
+                }
+
                 @foreach (var prop in props)
                 {
                     var header = GetHeader(prop);
@@ -35,6 +43,24 @@
 
                 <tr>
                     <td class="text-center center-cell">@rowIndex</td>
+
+                    @if (ShowActions)
+                    {
+                        <td class="text-center center-cell">
+                            <div class="d-flex flex-column align-items-center gap-1">
+                                <button type="button" class="btn btn-sm btn-warning"
+                                        @onclick="() => EditRecord(rec.SubProjectCode)">
+                                    <i class="bi bi-pencil-fill"></i> ویرایش
+                                </button>
+
+                                <button type="button" class="btn btn-sm btn-danger"
+                                        @onclick="() => ShowDeleteModal(rec.SubProjectCode)">
+                                    <i class="bi bi-trash-fill"></i> حذف
+                                </button>
+                            </div>
+                        </td>
+                    }
+
                     @foreach (var prop in props)
                     {
                         var value = prop.GetValue(rec);
@@ -48,6 +74,29 @@
     </table>
 
 
+    @* Modal حذف (Bootstrap) *@
+    @if (ShowModal)
+    {
+        <div class="modal show d-block" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">تأیید حذف</h5>
+                        <button type="button" class="close" aria-label="Close" @onclick="CloseModal">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>آیا از حذف رکورد با کد زیر پروژه <strong>@DeleteSubProjectCode</strong> مطمئن هستید؟ این عملیات قابل بازگشت نیست.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">انصراف</button>
+                        <button type="button" class="btn btn-danger" @onclick="ConfirmDeleteAsync">حذف</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
     <div class="d-flex justify-content-between align-items-center">
         <div>مجموع: @State.TotalRecords | صفحه @State.CurrentPage از @State.TotalPages</div>
@@ -75,10 +124,16 @@ else
 }
 
 
-
 @code {
-    [Parameter]
-    public List<BudgetRecord>? Records { get; set; }
+    [Parameter] public List<BudgetRecord>? Records { get; set; }
+
+    // حذف بر اساس SubProjectCode
+    [Parameter] public Func<string, Task>? DeleteRecordAsync { get; set; }
+
+    // اطلاع به والد با SubProjectCode
+    [Parameter] public EventCallback<string> OnDeleted { get; set; }
+
+    [Parameter] public bool ShowActions { get; set; } = false;
 
     private TableState State { get; set; } = new() { PageSize = 10 };
 
@@ -89,6 +144,62 @@ else
         "CreditDeficitSupply",
         "CreditDeficitCommitment"
     };
+
+    private bool ShowModal;
+    private string? DeleteSubProjectCode;
+
+    private void EditRecord(string SubProjectCode) => NavManager.NavigateTo($"/BudgetEditForm/{SubProjectCode}");
+
+    private void ShowDeleteModal(string SubProjectCode)
+    {
+        DeleteSubProjectCode = SubProjectCode;
+        ShowModal = true;
+    }
+
+    private void CloseModal()
+    {
+        ShowModal = false;
+        DeleteSubProjectCode = null;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        if (string.IsNullOrWhiteSpace(DeleteSubProjectCode))
+        {
+            ShowModal = false;
+            return;
+        }
+
+        if (DeleteRecordAsync is null)
+        {
+            ShowModal = false;
+            return;
+        }
+
+        try
+        {
+            await DeleteRecordAsync.Invoke(DeleteSubProjectCode);
+
+            // به‌روز کردن UI بدون بارگذاری مجدد
+            if (Records is not null)
+            {
+                Records.RemoveAll(r => r.SubProjectCode == DeleteSubProjectCode);
+                State.TotalRecords = Records.Count;
+
+                var maxPages = Math.Max(1, (int)Math.Ceiling(State.TotalRecords / (double)State.PageSize));
+                if (State.CurrentPage > maxPages) State.CurrentPage = maxPages;
+            }
+
+            if (OnDeleted.HasDelegate)
+                await OnDeleted.InvokeAsync(DeleteSubProjectCode);
+        }
+        finally
+        {
+            ShowModal = false;
+            StateHasChanged();
+            DeleteSubProjectCode = null;
+        }
+    }
 
     private void ChangeSort(string column)
     {
@@ -171,9 +282,11 @@ else
     {
         if (value is null) return "-";
 
+        // تاریخ‌ها
         if (value is DateTime dt) return dt.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
         if (value is DateTimeOffset dto) return dto.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
 
+        // رشته‌هایی که ممکن است تاریخ باشند
         if (value is string s)
         {
             if (TryParseDate(s, out var parsed))
@@ -181,35 +294,41 @@ else
             return s;
         }
 
-        return value switch
-        {
-            decimal dec => dec.ToString("#,0", CultureInfo.InvariantCulture),
-            double dbl => dbl.ToString("#,0.##", CultureInfo.InvariantCulture),
-            float fl => fl.ToString("#,0.##", CultureInfo.InvariantCulture),
-            long l => l.ToString("#,0", CultureInfo.InvariantCulture),
-            int i => i.ToString("#,0", CultureInfo.InvariantCulture),
-            short sh => sh.ToString("#,0", CultureInfo.InvariantCulture),
-            bool b => b ? "بله" : "خیر",
-            Enum e => e.ToString(),
-            _ => value.ToString() ?? "-"
-        };
+        // بولین
+        if (value is bool b) return b ? "بله" : "خیر";
+
+        // اعداد صحیح
+        if (value is sbyte or byte or short or ushort or int or uint or long or ulong)
+            return Convert.ToDecimal(value).ToString("N0", CultureInfo.CurrentCulture);
+
+        // اعداد اعشاری
+        if (value is float or double or decimal)
+            // return Convert.ToDecimal(value).ToString("N2", CultureInfo.CurrentCulture);
+            return Convert.ToDecimal(value).ToString("N0", CultureInfo.CurrentCulture);
+
+        // Enum
+        if (propertyType.IsEnum || value is Enum)
+            return value.ToString() ?? "-";
+
+        // سایر انواع
+        return value.ToString() ?? "-";
     }
 
-    private static bool TryParseDate(string input, out DateTime date)
+    private static bool TryParseDate(string input, out DateTime result)
     {
         var formats = new[]
         {
-            "yyyy/MM/dd","yyyy/M/d",
-            "yyyy-MM-dd","yyyy-M-d",
-            "dd/MM/yyyy","d/M/yyyy",
-            "MM/dd/yyyy","M/d/yyyy"
+            "yyyy/MM/dd", "yyyy-MM-dd",
+            "dd/MM/yyyy", "dd-MM-yyyy",
+            "MM/dd/yyyy", "MM-dd-yyyy",
+            "yyyy/M/d", "d/M/yyyy", "M/d/yyyy",
+            "yyyyMMdd"
         };
 
-        if (DateTime.TryParseExact(input, formats, CultureInfo.InvariantCulture,
-                                   DateTimeStyles.AllowWhiteSpaces, out date))
-            return true;
-
-        return DateTime.TryParse(input, CultureInfo.InvariantCulture,
-                                 DateTimeStyles.AllowWhiteSpaces, out date);
+        return DateTime.TryParseExact(input,
+                                      formats,
+                                      CultureInfo.InvariantCulture,
+                                      DateTimeStyles.None,
+                                      out result);
     }
 }
