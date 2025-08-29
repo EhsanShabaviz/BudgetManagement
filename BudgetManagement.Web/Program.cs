@@ -1,9 +1,11 @@
 using BudgetManagement.Application.Interfaces;
+using BudgetManagement.Application.Mappings;
 using BudgetManagement.Application.UseCases;
 using BudgetManagement.Application.Validators;
 using BudgetManagement.Infrastructure.Persistence;
 using BudgetManagement.Infrastructure.Repositories;
 using BudgetManagement.Infrastructure.Services.Excel;
+using BudgetManagement.Web.Common.Models;
 using BudgetManagement.Web.Components;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,11 +15,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+
 // Application
 builder.Services.AddScoped<IBudgetImportUseCase, BudgetImportUseCase>();
 builder.Services.AddScoped<BudgetImportValidator>();
 builder.Services.AddScoped<IBudgetCalculationUseCase, BudgetCalculationUseCase>();
 
+builder.Services.AddAutoMapper(typeof(BudgetRecordProfile).Assembly);
 
 // Infrastructure Adapters
 builder.Services.AddScoped<IBudgetExcelReader, BudgetExcelReader>();

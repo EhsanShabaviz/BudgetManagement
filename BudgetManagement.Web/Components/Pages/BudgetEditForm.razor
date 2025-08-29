@@ -1,19 +1,19 @@
-﻿@* @page "/BudgetEditForm/{SubProjectCode:string}" *@
-@page "/BudgetEditForm/{SubProjectCode}"
-@using BudgetManagement.Domain.Entities
+﻿@page "/BudgetEditForm/{SubProjectCode}"
+@rendermode InteractiveServer
+
+@using AutoMapper
+@using BudgetManagement.Application.DTOs
 @using BudgetManagement.Application.Interfaces
+@using BudgetManagement.Domain.Entities
 @using Microsoft.AspNetCore.Components.Forms
 
 @inject IBudgetRepository BudgetRepository
+@inject IMapper Mapper
 @inject NavigationManager Nav
 
 <h4 class="mb-3">ویرایش رکورد بودجه</h4>
 
-@if (isLoading)
-{
-    <div class="alert alert-info">در حال بارگذاری...</div>
-}
-else if (notFound)
+@if (notFound || model is null)
 {
     <div class="alert alert-warning">
         رکوردی با کد زیرپروژه <strong>@SubProjectCode</strong> پیدا نشد.
@@ -22,18 +22,16 @@ else if (notFound)
 }
 else if (model is not null)
 {
-    <EditForm Model="model" OnValidSubmit="HandleSaveAsync">
-        @* <EditForm Model="model" OnValidSubmit="@HandleSaveAsync"> *@
-
+    <EditForm Model="model" OnValidSubmit="HandleSaveAsync" FormName="bgtEditForm">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
         <div class="row g-3">
+           
             <div class="col-md-4">
                 <label class="form-label">کد زیرپروژه</label>
-                @* <InputText @bind-Value="model.SubProjectCode" class="form-control" disabled /> *@
-                <InputText Value="model.SubProjectCode" class="form-control" disabled />
-                <div class="form-text">این فیلد قابل تغییر نیست.</div>
+                <InputText @bind-Value="model.SubProjectCode" class="form-control" readonly />
+                <div class="form-text text-warning">این فیلد قابل تغییر نیست.</div>
             </div>
 
             <div class="col-md-4">
@@ -46,9 +44,115 @@ else if (model is not null)
                 <InputText @bind-Value="model.ContractNumber" class="form-control" />
             </div>
 
+            <div class="col-md-4">
+                <label class="form-label">تاریخ قرارداد</label>
+                <InputText @bind-Value="model.ContractDate" class="form-control" />
+            </div>
 
+            <div class="col-md-4">
+                <label class="form-label">پیمانکار</label>
+                <InputText @bind-Value="model.Contractor" class="form-control" />
+            </div>
 
-            @* در صورت نیاز، فیلدهای دیگر BudgetRecord را نیز اینجا اضافه کن *@
+            <div class="col-md-4">
+                <label class="form-label">کارگزار</label>
+                <InputText @bind-Value="model.Agent" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">وضعیت قرارداد</label>
+                <InputText @bind-Value="model.ContractStatus" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">مبلغ کل قرارداد</label>
+                <InputNumber @bind-Value="model.TotalContractAmount" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">مبلغ اولیه</label>
+                <InputNumber @bind-Value="model.InitialAmount" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">مبلغ کل تامین اعتبار سال جاری</label>
+                <InputNumber @bind-Value="model.CurrentYearTotalCredit" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">کل مبلغ تامین از ابتدای پیمان</label>
+                <InputNumber @bind-Value="model.TotalCreditFromStart" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">معاونت اجرایی</label>
+                <InputText @bind-Value="model.ExecutiveDept" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">تاریخ شروع</label>
+                <InputText @bind-Value="model.StartDate" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">تاریخ خاتمه</label>
+                <InputText @bind-Value="model.EndDate" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">تاریخ تمدید یافته</label>
+                <InputText @bind-Value="model.ExtendedEndDate" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">نحوه ارجاع کار</label>
+                <InputText @bind-Value="model.WorkReferralMethod" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">مبلغ کل صورت وضعیت‌ها</label>
+                <InputNumber @bind-Value="model.TotalInvoicesAmount" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">مبلغ کل کارکرد</label>
+                <InputNumber @bind-Value="model.TotalWorkProgress" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">مبلغ صورت وضعیت‌ها در سال جاری</label>
+                <InputNumber @bind-Value="model.CurrentYearInvoicesAmount" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">شماره تأمین</label>
+                <InputText @bind-Value="model.CreditNumber" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">ماهیت</label>
+                <InputText @bind-Value="model.Nature" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">مبلغ تعدیل</label>
+                <InputNumber @bind-Value="model.AdjustmentAmount" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">حداکثر اعتبار موردنیاز</label>
+                <InputNumber @bind-Value="model.MaxRequiredCredit" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">کسری اعتبار تامین</label>
+                <InputNumber @bind-Value="model.CreditDeficitSupply" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">کسری اعتبار تعهد</label>
+                <InputNumber @bind-Value="model.CreditDeficitCommitment" class="form-control" />
+            </div>
         </div>
 
         <div class="mt-4 d-flex gap-2">
@@ -66,57 +170,62 @@ else if (model is not null)
 }
 
 @code {
-    [Parameter] public string? SubProjectCode { get; set; } // با route سازگار است (حساس به حروف نیست)
+    [Parameter]
+    public string? SubProjectCode { get; set; }
 
-    private BudgetRecord? model;
-    private bool isLoading = true;
+    private BudgetRecordEditDto? model;
+    private BudgetRecord? entity;
     private bool notFound = false;
     private bool isSaving = false;
     private string? message;
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
-        isLoading = true;
         notFound = false;
         message = null;
 
         if (string.IsNullOrWhiteSpace(SubProjectCode))
         {
             notFound = true;
-            isLoading = false;
             return;
         }
-
-        model = await BudgetRepository.GetBySubProjectCodeAsync(SubProjectCode!);
-        notFound = model is null;
-        isLoading = false;
+        else
+        {
+              // فقط یکبار entity و model رو مقداردهی میشود
+            entity = await BudgetRepository.GetBySubProjectCodeAsync(SubProjectCode!);
+            notFound = entity is null;
+            if (entity is not null && model is null) // ❗ شرط مهم
+            {
+                model = Mapper.Map<BudgetRecordEditDto>(entity);
+            }
+        }
     }
 
     private async Task HandleSaveAsync()
     {
-        if (model is null) return;
+        isSaving = true;
+        message = null;
 
         try
         {
-            isSaving = true;
+            if (model is null || entity is null) return;
 
-            await BudgetRepository.UpdateAsync(model);
+            // انتقال تغییرات از DTO به entity
+            Mapper.Map(model, entity);
+
             await BudgetRepository.SaveChangesAsync();
 
-            message = "تغییرات با موفقیت ذخیره شد.";
-            // در صورت تمایل: بازگشت خودکار بعد از چند ثانیه
-            await Task.Delay(800);
-            Nav.NavigateTo("/BudgetEdit");
+            message = "اطلاعات با موفقیت ذخیره شد ✅";
+        }
+        catch (Exception ex)
+        {
+            message = $"خطا در ذخیره‌سازی: {ex.Message}";
         }
         finally
         {
             isSaving = false;
-            StateHasChanged();
         }
     }
 
-    private void GoBack()
-    {
-        Nav.NavigateTo("/BudgetEdit");
-    }
+    private void GoBack() => Nav.NavigateTo("/BudgetEdit");
 }

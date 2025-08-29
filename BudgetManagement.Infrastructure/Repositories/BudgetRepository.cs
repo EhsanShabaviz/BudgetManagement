@@ -7,23 +7,26 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-
 namespace BudgetManagement.Infrastructure.Repositories
 {
     public class BudgetRepository : IBudgetRepository
     {
-        private readonly BudgetManagementDbContext _db; 
+        private readonly BudgetManagementDbContext _db;
 
         public BudgetRepository(BudgetManagementDbContext db)
         {
             _db = db;
         }
 
+        // 📌 فقط خواندن → بدون Tracking
         public async Task<IEnumerable<BudgetRecord>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            return await _db.BudgetRecords.AsNoTracking().ToListAsync(cancellationToken);
+            return await _db.BudgetRecords
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
         }
 
+        // 📌 برای ویرایش → Tracking فعال
         public async Task<BudgetRecord?> GetBySubProjectCodeAsync(string subProjectCode, CancellationToken cancellationToken = default)
         {
             return await _db.BudgetRecords
@@ -41,6 +44,15 @@ namespace BudgetManagement.Infrastructure.Repositories
             return Task.CompletedTask;
         }
 
+        public async Task UpdateBySubProjectCodeAsync(string subProjectCode, BudgetRecord updatedEntity, CancellationToken cancellationToken = default)
+        {
+            if (subProjectCode != updatedEntity.SubProjectCode)
+                return;
+
+            _db.BudgetRecords.Update(updatedEntity);
+            await Task.CompletedTask;
+        }
+
         public Task DeleteAsync(BudgetRecord record, CancellationToken cancellationToken = default)
         {
             _db.BudgetRecords.Remove(record);
@@ -56,15 +68,16 @@ namespace BudgetManagement.Infrastructure.Repositories
             if (entity != null)
             {
                 _db.BudgetRecords.Remove(entity);
-                //await _db.SaveChangesAsync(cancellationToken);//ESH
             }
         }
 
+        // 📌 فقط خواندن → بدون Tracking
         public async Task<Dictionary<string, BudgetRecord>> GetBySubProjectCodesAsync(
             IEnumerable<string> subProjectCodes,
             CancellationToken cancellationToken = default)
         {
             return await _db.BudgetRecords
+                .AsNoTracking()
                 .Where(r => subProjectCodes.Contains(r.SubProjectCode))
                 .ToDictionaryAsync(r => r.SubProjectCode, cancellationToken);
         }
@@ -86,4 +99,3 @@ namespace BudgetManagement.Infrastructure.Repositories
         }
     }
 }
-

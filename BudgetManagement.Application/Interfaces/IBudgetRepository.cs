@@ -12,6 +12,7 @@ namespace BudgetManagement.Application.Interfaces
         Task<BudgetRecord?> GetBySubProjectCodeAsync(string subProjectCode, CancellationToken cancellationToken = default);
         Task AddAsync(BudgetRecord record, CancellationToken cancellationToken = default);
         Task UpdateAsync(BudgetRecord record, CancellationToken cancellationToken = default);
+        Task UpdateBySubProjectCodeAsync(string subProjectCode, BudgetRecord record, CancellationToken cancellationToken = default);
         Task DeleteAsync(BudgetRecord record, CancellationToken cancellationToken = default);
         Task DeleteBySubProjectCodeAsync(string subProjectCode, CancellationToken cancellationToken = default);
 

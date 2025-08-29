@@ -99,7 +99,15 @@
     }
 
     <div class="d-flex justify-content-between align-items-center">
-        <div>مجموع: @State.TotalRecords | صفحه @State.CurrentPage از @State.TotalPages</div>
+        @* <div>مجموع: @State.TotalRecords | صفحه @State.CurrentPage از @State.TotalPages</div> *@
+
+        <div class="d-flex justify-content-center text-muted small mt-2">
+            مجموع: <span class="fw-bold text-dark mx-1">@State.TotalRecords</span> |
+            صفحه <span class="fw-bold text-dark mx-1">@State.CurrentPage</span>
+            از <span class="fw-bold text-dark mx-1">@State.TotalPages</span>
+        </div>
+
+
         <div class="btn-group">
             <button class="btn btn-sm btn-outline-secondary" @onclick="GoToFirst" disabled="@(State.CurrentPage == 1)">⏭ اول</button>
             <button class="btn btn-sm btn-outline-secondary" @onclick="PrevPage" disabled="@(State.CurrentPage == 1)">قبلی</button>
