@@ -4,6 +4,8 @@
 @using BudgetManagement.Domain.Entities
 @using BudgetManagement.Application.Interfaces
 @using System.Globalization;
+@using BudgetManagement.Web.Extensions
+
 @inject IBudgetRepository BudgetRepository
 
 <h3>ویرایش اطلاعات</h3>
@@ -17,18 +19,19 @@
 </div>
 
 <EditForm Model="@filters" OnValidSubmit="@SearchAsync">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
 
     <div class="row g-3">
-        <div class="col-md-4">
+        <div class="col-12 col-md-2">
             <label class="form-label">کد زیرپروژه</label>
             <InputText @bind-Value="filters.SubProjectCode" class="form-control" />
         </div>
 
-        <div class="col-md-4">
+        <div class="col-12 col-md-8">
             <label class="form-label">عنوان قرارداد</label>
-            <InputText @bind-Value="filters.ContractTitle" @oninput="UpdateTitleSuggestions" class="form-control" list="titleList" />
+            <InputText @bind-Value="filters.ContractTitle"
+                       @oninput="UpdateTitleSuggestions"
+                       class="form-control"
+                       list="titleList" />
             <datalist id="titleList">
                 @foreach (var title in titleSuggestions)
                 {
@@ -37,12 +40,16 @@
             </datalist>
         </div>
 
-        <div class="col-md-4">
+        <div class="d-none d-md-block col-md-7"><!-- filler --></div>
+    </div>
+
+    <div class="row g-3 mt-2">
+        <div class="col-12 col-md-2">
             <label class="form-label">شماره قرارداد</label>
             <InputText @bind-Value="filters.ContractNumber" class="form-control" />
         </div>
 
-        <div class="col-md-4">
+        <div class="col-12 col-md-4">
             <label class="form-label">معاونت اجرایی</label>
             <div class="input-group">
                 <InputSelect @bind-Value="filters.ExecutiveDept" class="form-select">
@@ -55,16 +62,31 @@
             </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-12 col-md-2">
             <label class="form-label">از تاریخ قرارداد</label>
-            <InputText @bind-Value="filters.StartContractDate" class="form-control" placeholder="yyyy/MM/dd" />
+            @* <InputPersianDatePicker @bind-Value="filters.StartContractDate"
+                                    CalendarIconPosition="IconPosition.Right"
+                                    CalendarType=Blazor.PersianDatePicker.Calendar.SingleModeJalali
+                                    DigitType="DigitType.English"
+                                    MinDateSetOnToday="false"
+                                    Placeholder="yyyy/MM/dd"
+                                    CssClass="form-control"
+                                    Theme="PickerTheme.Blue"
+                                    MarkHolidays="false" /> *@
+            <CustomizeInputPersianDatePicker @bind-Value="filters.StartContractDate" />
+
+
         </div>
 
-        <div class="col-md-4">
+        <div class="col-12 col-md-2">
             <label class="form-label">تا تاریخ قرارداد</label>
-            <InputText @bind-Value="filters.EndContractDate" class="form-control" placeholder="yyyy/MM/dd" />
+            <CustomizeInputPersianDatePicker @bind-Value="filters.EndContractDate" />
         </div>
+
+        <div class="d-none d-md-block col-md-5"><!-- filler --></div>
     </div>
+
+
 
     <div class="mt-4">
         <button type="submit" class="btn btn-primary">جستجو</button>
@@ -86,6 +108,7 @@ else if (results is not null)
     <div class="alert alert-warning mt-4">هیچ رکوردی مطابق فیلترها یافت نشد.</div>
 }
 
+
 @code {
     private FilterModel filters = new();
     private List<BudgetRecord>? results;
@@ -94,92 +117,25 @@ else if (results is not null)
     private List<string> titleSuggestions = new();
     private List<string> ExecutiveDeptOptions = new();
 
-
-
-    private async Task SearchAsync()
+    private class FilterModel
     {
-        isSearching = true;
-
-        DateTime? start = TryParseDate(filters.StartContractDate);
-        DateTime? end = TryParseDate(filters.EndContractDate);
-
-        var all = await BudgetRepository.GetAllAsync();
-
-        results = all
-            .Where(r =>
-            {
-                // فیلترهای متنی
-                bool matchSubProject = string.IsNullOrWhiteSpace(filters.SubProjectCode) ||
-                                       r.SubProjectCode.Contains(filters.SubProjectCode.Trim(), StringComparison.OrdinalIgnoreCase);
-
-                bool matchTitle = string.IsNullOrWhiteSpace(filters.ContractTitle) ||
-                                  r.ContractTitle.Contains(filters.ContractTitle.Trim(), StringComparison.OrdinalIgnoreCase);
-
-                bool matchNumber = string.IsNullOrWhiteSpace(filters.ContractNumber) ||
-                                   r.ContractNumber.Contains(filters.ContractNumber.Trim(), StringComparison.OrdinalIgnoreCase);
-
-                // فیلترهای انتخابی
-                bool ExecutiveDept = string.IsNullOrWhiteSpace(filters.ExecutiveDept) ||
-                                       r.ExecutiveDept.Contains(filters.ExecutiveDept.Trim(), StringComparison.OrdinalIgnoreCase);
-
-                // تبدیل تاریخ قرارداد
-                DateTime? contractDate = TryParseDate(r.ContractDate?.ToString());
-
-                bool matchStart = !start.HasValue || (contractDate.HasValue && contractDate.Value >= start.Value);
-                bool matchEnd = !end.HasValue || (contractDate.HasValue && contractDate.Value <= end.Value);
-
-                return matchSubProject && matchTitle && matchNumber && ExecutiveDept && matchStart && matchEnd;
-            })
-            .ToList();
-
-        isSearching = false;
+        public string? SubProjectCode { get; set; }
+        public string? ContractTitle { get; set; }
+        public string? ContractNumber { get; set; }
+        public string? StartContractDate { get; set; }
+        public string? EndContractDate { get; set; }
+        public string? ExecutiveDept { get; set; }
     }
+}
 
-    private DateTime? TryParseDate(string dateStr)
+
+@functions {
+
+    protected async override Task OnInitializedAsync()
     {
-        if (string.IsNullOrWhiteSpace(dateStr))
-            return null;
-
-        // تلاش برای تبدیل تاریخ میلادی
-        if (DateTime.TryParse(dateStr, out var gregorianDate))
-            return gregorianDate;
-
-        // تلاش برای تبدیل تاریخ شمسی (فرمت: yyyy/MM/dd یا yyyy-MM-dd)
-        var persianCalendar = new PersianCalendar();
-        string[] formats = { "yyyy/MM/dd", "yyyy-M-d", "yyyy/M/d", "yyyy-MM-dd" };
-
-        foreach (var format in formats)
-        {
-            if (DateTime.TryParseExact(dateStr, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var persianDate))
-            {
-                try
-                {
-                    int year = int.Parse(dateStr.Split('/', '-')[0]);
-                    int month = int.Parse(dateStr.Split('/', '-')[1]);
-                    int day = int.Parse(dateStr.Split('/', '-')[2]);
-
-                    return persianCalendar.ToDateTime(year, month, day, 0, 0, 0, 0);
-                }
-                catch
-                {
-                    return null;
-                }
-            }
-        }
-
-        return null;
-    }
-
-
-    private async Task DeleteAsync(string subProjectCode)
-    {
-        await BudgetRepository.DeleteBySubProjectCodeAsync(subProjectCode);
-        await BudgetRepository.SaveChangesAsync();
-
-        if (results is not null)
-        {
-            results.RemoveAll(r => r.SubProjectCode == subProjectCode);
-        }
+        ExecutiveDeptOptions = await BudgetRepository.GetExecutiveDeptAsync();
+       
+        // filters.ExecutiveDept = null; Pre-select a ExecutiveDeputy
     }
 
     private async Task UpdateTitleSuggestions(ChangeEventArgs e)
@@ -190,30 +146,65 @@ else if (results is not null)
         var all = await BudgetRepository.GetAllAsync();
         titleSuggestions = all
             .Select(r => r.ContractTitle)
-            .Where(t => t.Contains(input, StringComparison.OrdinalIgnoreCase))
+            .Where(t => !string.IsNullOrEmpty(t))         // remove null or empty
+            .Where(t => t!.Contains(input, StringComparison.OrdinalIgnoreCase))
             .Distinct()
             .Take(10)
-            .ToList();
+            .ToList()!;
     }
 
-    protected async override Task OnInitializedAsync()
+    private async Task SearchAsync()
     {
+        isSearching = true;
+
+        DateTime? start = filters.StartContractDate?.PersianDigitsToLatin().TryParseShamsiDateToMiladi();
+        DateTime? end = filters.EndContractDate?.PersianDigitsToLatin().TryParseShamsiDateToMiladi();
+
         var all = await BudgetRepository.GetAllAsync();
-        ExecutiveDeptOptions = all
-            .Select(r => r.ExecutiveDept)
-            .Distinct()
+
+        results = all
+            .Where(r =>
+            {
+                // فیلترهای متنی
+                bool matchSubProjectCode = string.IsNullOrWhiteSpace(filters.SubProjectCode) ||
+                               r.SubProjectCode.Equals(filters.SubProjectCode.Trim(), StringComparison.OrdinalIgnoreCase);
+
+                bool contractTitle = string.IsNullOrWhiteSpace(filters.ContractTitle) ||
+                          r.ContractTitle!.Contains(filters.ContractTitle.Trim(), StringComparison.OrdinalIgnoreCase);
+
+                bool contractNumber = string.IsNullOrWhiteSpace(filters.ContractNumber) ||
+                           r.ContractNumber!.Contains(filters.ContractNumber.Trim(), StringComparison.OrdinalIgnoreCase);
+
+                // فیلترهای انتخابی
+                var exec = filters.ExecutiveDept?.Trim();
+                bool matchExecutiveDept =
+                    string.IsNullOrWhiteSpace(exec) ||
+                    (!string.IsNullOrWhiteSpace(r.ExecutiveDept) &&
+                     string.Equals(r.ExecutiveDept, exec, StringComparison.OrdinalIgnoreCase));
+
+
+                // تبدیل تاریخ قرارداد
+                DateTime? contractDate = (r.ContractDate).TryParseShamsiDateToMiladi();
+
+                bool matchStart = !start.HasValue || (contractDate != null && contractDate.Value.Date >= start.Value.Date);
+                bool matchEnd = !end.HasValue || (contractDate != null && contractDate.Value.Date <= end.Value.Date);
+
+
+                return matchSubProjectCode && contractTitle && contractNumber && matchExecutiveDept && matchStart && matchEnd;
+            })
             .ToList();
 
-        // filters.ExecutiveDept = null; Pre-select a ExecutiveDeputy
+        isSearching = false;
     }
 
-    private class FilterModel
+    private async Task DeleteAsync(string subProjectCode)
     {
-        public string? SubProjectCode { get; set; }
-        public string? ContractTitle { get; set; }
-        public string? ContractNumber { get; set; }
-        public string? StartContractDate { get; set; }
-        public string? EndContractDate { get; set; }
-        public string? ExecutiveDept { get; set; }
+        await BudgetRepository.DeleteBySubProjectCodeAsync(subProjectCode);
+        await BudgetRepository.SaveChangesAsync();
+
+        if (results is not null)
+        {
+            results.RemoveAll(r => r.SubProjectCode == subProjectCode);
+        }
     }
 }

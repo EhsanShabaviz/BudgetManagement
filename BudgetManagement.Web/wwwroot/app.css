@@ -122,6 +122,12 @@ h1:focus {
     color: #856404;
 }
 
+.highlight-number {
+    background-color: #fff3cd;
+    font-weight: bold;
+/*    text-align: left;*/
+}
+
 .sortable {
     cursor: pointer;
 }
@@ -142,3 +148,6 @@ h1:focus {
     background-color: #57A7FF;
     color: white; 
 }
+
+
+

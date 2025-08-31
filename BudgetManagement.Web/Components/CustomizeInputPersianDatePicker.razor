@@ -1,0 +1,59 @@
+﻿@using System.Linq.Expressions
+
+@* CustomizeInputPersianDatePicker.razor *@
+<InputPersianDatePicker Value="@Value"
+                        ValueChanged="InternalOnValueChanged"
+                        ValueExpression="@ValueExpression"
+                        CalendarIconPosition="IconPosition.Right"
+                        CalendarType="Calendar.SingleModeJalali"
+                        DigitType="DigitType.English"
+                        MinDateSetOnToday="false"
+                        Placeholder="@Placeholder"
+                        CssClass="form-control"
+                        Theme="PickerTheme.Blue"
+                        MarkHolidays="false" />
+
+
+<style>
+    /* Input Icon-ESH- For--> PersianDatePicker: PickerAlign="Align.Right" */
+    .persian-datepicker-right-icon {
+        padding: 6px 33px 6px 30px !important;
+    }
+</style>
+
+
+@code {
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    // ✅ حتماً این باشد تا @bind-Value از والد بدون خطا کار کند
+    [Parameter] public Expression<Func<string?>>? ValueExpression { get; set; }
+
+    [Parameter] public string Placeholder { get; set; } = "yyyy/MM/dd";
+
+    private async Task InternalOnValueChanged(string? newValue)
+    {
+        try
+        {
+            // Normalize empty -> null
+            if (string.IsNullOrWhiteSpace(newValue))
+            {
+                Value = null;
+                await ValueChanged.InvokeAsync(null);
+                return;
+            }
+
+            // در صورت نیاز میتوانیم اینجا فرمت/ولیدیت انجام دهیم
+            Value = newValue;
+            await ValueChanged.InvokeAsync(newValue);
+        }
+        catch (Exception ex)
+        {
+            // لاگ سرور
+            Console.Error.WriteLine($"CustomizeInputPersianDatePicker.InternalOnValueChanged error: {ex}");
+
+            // (اختیاری) اگر می‌خواهیم پیغامی به کاربر نشان دهیم، می‌توانیم EventCallback یا State management ماضافه کنی.
+            // مهم: خطا را throw نکن تا باعث Reload نشود.
+        }
+    }
+}

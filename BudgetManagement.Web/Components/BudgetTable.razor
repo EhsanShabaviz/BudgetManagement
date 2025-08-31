@@ -15,63 +15,66 @@
     State.TotalRecords = Records.Count;
     var pageItems = TablePaginationService.Paginate(sorted, State.CurrentPage, State.PageSize).ToList();
 
-    <table class="table table-striped table-bordered table-sm text-center">
-        <thead>
-            <tr>
-                <th style="width:72px;" class="text-center center-cell">ردیف</th>
-
-                @if (ShowActions)
-                {
-                    <th style="width:140px;" class="text-center center-cell">عملیات</th>
-                }
-
-                @foreach (var prop in props)
-                {
-                    var header = GetHeader(prop);
-                    <th class="@GetSortClass(prop.Name) text-center center-cell"
-                        @onclick="() => ChangeSort(prop.Name)">
-                        @header
-                    </th>
-                }
-            </tr>
-        </thead>
-        <tbody>
-            @for (var i = 0; i < pageItems.Count; i++)
-            {
-                var rec = pageItems[i];
-                var rowIndex = (State.CurrentPage - 1) * State.PageSize + i + 1;
-
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered table-sm text-center small align-middle">
+            <thead class="table-light">
                 <tr>
-                    <td class="text-center center-cell">@rowIndex</td>
+                    <th style="width:72px;" class="text-center center-cell">ردیف</th>
 
                     @if (ShowActions)
                     {
-                        <td class="text-center center-cell">
-                            <div class="d-flex flex-column align-items-center gap-1">
-                                <button type="button" class="btn btn-sm btn-warning"
-                                        @onclick="() => EditRecord(rec.SubProjectCode)">
-                                    <i class="bi bi-pencil-fill"></i> ویرایش
-                                </button>
-
-                                <button type="button" class="btn btn-sm btn-danger"
-                                        @onclick="() => ShowDeleteModal(rec.SubProjectCode)">
-                                    <i class="bi bi-trash-fill"></i> حذف
-                                </button>
-                            </div>
-                        </td>
+                        <th style="width:140px;" class="text-center center-cell">عملیات</th>
                     }
 
                     @foreach (var prop in props)
                     {
-                        var value = prop.GetValue(rec);
-                        <td class="text-center center-cell @(HighlightedColumns.Contains(prop.Name) ? "highlight-cell" : "")">
-                            @FormatCell(value, prop.PropertyType)
-                        </td>
+                        var header = GetHeader(prop);
+                        <th class="@GetSortClass(prop.Name) text-center center-cell"
+                            @onclick="() => ChangeSort(prop.Name)">
+                            @header
+                        </th>
                     }
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < pageItems.Count; i++)
+                {
+                    var rec = pageItems[i];
+                    var rowIndex = (State.CurrentPage - 1) * State.PageSize + i + 1;
+
+                    <tr>
+                        <td class="text-center center-cell">@rowIndex</td>
+
+                        @if (ShowActions)
+                        {
+                            <td class="text-center center-cell">
+                                <div class="d-flex flex-column align-items-center gap-1">
+                                    <button type="button" class="btn btn-warning btn-sm"
+                                            @onclick="() => EditRecord(rec.SubProjectCode)">
+                                        <i class="bi bi-pencil-fill"></i> ویرایش
+                                    </button>
+
+                                    <button type="button" class="btn btn-danger btn-sm"
+                                            @onclick="() => ShowDeleteModal(rec.SubProjectCode)">
+                                        <i class="bi bi-trash-fill"></i> حذف
+                                    </button>
+                                </div>
+                            </td>
+                        }
+
+                        @foreach (var prop in props)
+                        {
+                            var value = prop.GetValue(rec);
+                            <td class="text-center center-cell @(HighlightedColumns.Contains(prop.Name) ? "highlight-cell" : "")">
+                                @FormatCell(value, prop.PropertyType)
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
 
 
     @* Modal حذف (Bootstrap) *@

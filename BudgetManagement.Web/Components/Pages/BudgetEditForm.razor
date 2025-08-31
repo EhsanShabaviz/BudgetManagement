@@ -27,7 +27,7 @@ else if (model is not null)
         <ValidationSummary />
 
         <div class="row g-3">
-           
+
             <div class="col-md-4">
                 <label class="form-label">کد زیرپروژه</label>
                 <InputText @bind-Value="model.SubProjectCode" class="form-control" readonly />
@@ -46,7 +46,8 @@ else if (model is not null)
 
             <div class="col-md-4">
                 <label class="form-label">تاریخ قرارداد</label>
-                <InputText @bind-Value="model.ContractDate" class="form-control" />
+                @* <InputText @bind-Value="model.ContractDate" class="form-control" /> *@
+                <CustomizeInputPersianDatePicker @bind-Value="model.ContractDate" />
             </div>
 
             <div class="col-md-4">
@@ -61,7 +62,16 @@ else if (model is not null)
 
             <div class="col-md-4">
                 <label class="form-label">وضعیت قرارداد</label>
-                <InputText @bind-Value="model.ContractStatus" class="form-control" />
+                @* <InputText @bind-Value="model.ContractStatus" class="form-control" /> *@
+                <div class="input-group">
+                    <InputSelect @bind-Value="model.ContractStatus" class="form-select">
+                        <option value="">-- انتخاب کنید --</option>
+                        @foreach (var dept in ContractStatusOptions)
+                        {
+                            <option value="@dept">@dept</option>
+                        }
+                    </InputSelect>
+                </div>
             </div>
 
             <div class="col-md-4">
@@ -86,27 +96,45 @@ else if (model is not null)
 
             <div class="col-md-4">
                 <label class="form-label">معاونت اجرایی</label>
-                <InputText @bind-Value="model.ExecutiveDept" class="form-control" />
+                @* <InputText @bind-Value="model.ExecutiveDept" class="form-control" /> *@
+                <div class="input-group">
+                    <InputSelect @bind-Value="model.ExecutiveDept" class="form-select">
+                        <option value="">-- انتخاب کنید --</option>
+                        @foreach (var dept in ExecutiveDeptOptions)
+                        {
+                            <option value="@dept">@dept</option>
+                        }
+                    </InputSelect>
+                </div>
             </div>
 
             <div class="col-md-4">
                 <label class="form-label">تاریخ شروع</label>
-                <InputText @bind-Value="model.StartDate" class="form-control" />
+                <CustomizeInputPersianDatePicker @bind-Value="model.StartDate" />
             </div>
 
             <div class="col-md-4">
                 <label class="form-label">تاریخ خاتمه</label>
-                <InputText @bind-Value="model.EndDate" class="form-control" />
+                <CustomizeInputPersianDatePicker @bind-Value="model.EndDate" />
             </div>
 
             <div class="col-md-4">
                 <label class="form-label">تاریخ تمدید یافته</label>
-                <InputText @bind-Value="model.ExtendedEndDate" class="form-control" />
+                <CustomizeInputPersianDatePicker @bind-Value="model.ExtendedEndDate" />
             </div>
 
             <div class="col-md-4">
                 <label class="form-label">نحوه ارجاع کار</label>
-                <InputText @bind-Value="model.WorkReferralMethod" class="form-control" />
+                @* <InputText @bind-Value="model.WorkReferralMethod" class="form-control" /> *@
+                <div class="input-group">
+                    <InputSelect @bind-Value="model.WorkReferralMethod" class="form-select">
+                        <option value="">-- انتخاب کنید --</option>
+                        @foreach (var dept in WorkReferralMethodOptions)
+                        {
+                            <option value="@dept">@dept</option>
+                        }
+                    </InputSelect>
+                </div>
             </div>
 
             <div class="col-md-4">
@@ -131,43 +159,56 @@ else if (model is not null)
 
             <div class="col-md-4">
                 <label class="form-label">ماهیت</label>
-                <InputText @bind-Value="model.Nature" class="form-control" />
+                @* <InputText @bind-Value="model.Nature" class="form-control" /> *@
+                <div class="input-group">
+                    <InputSelect @bind-Value="model.Nature" class="form-select">
+                        <option value="">-- انتخاب کنید --</option>
+                        @foreach (var dept in NatureOptions)
+                        {
+                            <option value="@dept">@dept</option>
+                        }
+                    </InputSelect>
+                </div>
             </div>
 
             <div class="col-md-4">
                 <label class="form-label">مبلغ تعدیل</label>
-                <InputNumber @bind-Value="model.AdjustmentAmount" class="form-control" />
+                <InputNumber @bind-Value="model.AdjustmentAmount" class="form-control highlight-number" />
             </div>
 
             <div class="col-md-4">
                 <label class="form-label">حداکثر اعتبار موردنیاز</label>
-                <InputNumber @bind-Value="model.MaxRequiredCredit" class="form-control" />
+                <InputNumber @bind-Value="model.MaxRequiredCredit" class="form-control highlight-number" />
             </div>
 
             <div class="col-md-4">
                 <label class="form-label">کسری اعتبار تامین</label>
-                <InputNumber @bind-Value="model.CreditDeficitSupply" class="form-control" />
+                <InputNumber @bind-Value="model.CreditDeficitSupply" class="form-control highlight-number" />
             </div>
 
             <div class="col-md-4">
                 <label class="form-label">کسری اعتبار تعهد</label>
-                <InputNumber @bind-Value="model.CreditDeficitCommitment" class="form-control" />
+                <InputNumber @bind-Value="model.CreditDeficitCommitment" class="form-control highlight-number" />
             </div>
-        </div>
-
-        <div class="mt-4 d-flex gap-2">
-            <button type="submit" class="btn btn-primary" disabled="@isSaving">
-                @(isSaving ? "در حال ذخیره..." : "ذخیره")
-            </button>
-            <button type="button" class="btn btn-outline-secondary" @onclick="GoBack" disabled="@isSaving">انصراف</button>
         </div>
 
         @if (!string.IsNullOrWhiteSpace(message))
         {
             <div class="alert alert-success mt-3">@message</div>
         }
+
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                @(isSaving ? "در حال ذخیره..." : "ذخیره")
+            </button>
+
+            <button type="button" class="btn btn-outline-secondary" @onclick="GoBack" disabled="@isSaving">انصراف</button>
+        </div>
+
     </EditForm>
 }
+
+
 
 @code {
     [Parameter]
@@ -178,7 +219,13 @@ else if (model is not null)
     private bool notFound = false;
     private bool isSaving = false;
     private string? message;
+    private List<string> ExecutiveDeptOptions = new();
+    private List<string> ContractStatusOptions = new();
+    private List<string> WorkReferralMethodOptions = new();
+    private List<string> NatureOptions = new();
+}
 
+@functions {
     protected override async Task OnInitializedAsync()
     {
         notFound = false;
@@ -191,11 +238,16 @@ else if (model is not null)
         }
         else
         {
-              // فقط یکبار entity و model رو مقداردهی میشود
+            // فقط یکبار entity و model رو مقداردهی میشود
             entity = await BudgetRepository.GetBySubProjectCodeAsync(SubProjectCode!);
             notFound = entity is null;
             if (entity is not null && model is null) // ❗ شرط مهم
             {
+                ExecutiveDeptOptions = await BudgetRepository.GetExecutiveDeptAsync();
+                ContractStatusOptions = await BudgetRepository.GetContractStatusAsync();
+                WorkReferralMethodOptions = await BudgetRepository.GetWorkReferralMethodAsync();
+                NatureOptions = await BudgetRepository.GetNatureAsync();
+
                 model = Mapper.Map<BudgetRecordEditDto>(entity);
             }
         }

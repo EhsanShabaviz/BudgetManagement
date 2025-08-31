@@ -10,6 +10,10 @@ namespace BudgetManagement.Application.Interfaces
         // متدهای تک‌به‌تک
         Task<IEnumerable<BudgetRecord>> GetAllAsync(CancellationToken cancellationToken = default);
         Task<BudgetRecord?> GetBySubProjectCodeAsync(string subProjectCode, CancellationToken cancellationToken = default);
+        Task<List<string>> GetExecutiveDeptAsync(CancellationToken cancellationToken = default);
+        Task<List<string>> GetContractStatusAsync(CancellationToken cancellationToken = default);
+        Task<List<string>> GetWorkReferralMethodAsync(CancellationToken cancellationToken = default);
+        Task<List<string>> GetNatureAsync(CancellationToken cancellationToken = default);
         Task AddAsync(BudgetRecord record, CancellationToken cancellationToken = default);
         Task UpdateAsync(BudgetRecord record, CancellationToken cancellationToken = default);
         Task UpdateBySubProjectCodeAsync(string subProjectCode, BudgetRecord record, CancellationToken cancellationToken = default);

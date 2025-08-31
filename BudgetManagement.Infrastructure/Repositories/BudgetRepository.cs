@@ -33,6 +33,46 @@ namespace BudgetManagement.Infrastructure.Repositories
                 .FirstOrDefaultAsync(r => r.SubProjectCode == subProjectCode, cancellationToken);
         }
 
+        public async Task<List<string>> GetExecutiveDeptAsync(CancellationToken cancellationToken = default)
+        {
+            return await _db.BudgetRecords
+                .Select(r => r.ExecutiveDept)
+                .Where(d => !string.IsNullOrEmpty(d))         // remove null or empty
+                .Distinct()
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<string>> GetContractStatusAsync(CancellationToken cancellationToken = default)
+        {
+            return await _db.BudgetRecords
+                .Select(r => r.ContractStatus)
+                .Where(d => !string.IsNullOrEmpty(d))         // remove null or empty
+                .Distinct()
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<string>> GetWorkReferralMethodAsync(CancellationToken cancellationToken = default)
+        {
+            return await _db.BudgetRecords
+                .Select(r => r.WorkReferralMethod)
+                .Where(d => !string.IsNullOrEmpty(d))         // remove null or empty
+                .Distinct()
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<string>> GetNatureAsync(CancellationToken cancellationToken = default)
+        {
+            return await _db.Natures
+                .Select(r => r.Name)
+                .Where(d => !string.IsNullOrEmpty(d))         // remove null or empty
+                .Distinct()
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task AddAsync(BudgetRecord record, CancellationToken cancellationToken = default)
         {
             await _db.BudgetRecords.AddAsync(record, cancellationToken);
@@ -97,5 +137,6 @@ namespace BudgetManagement.Infrastructure.Repositories
         {
             await _db.SaveChangesAsync(cancellationToken);
         }
+
     }
 }
