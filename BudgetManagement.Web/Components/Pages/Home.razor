@@ -1,4 +1,6 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 
 <PageTitle>Home</PageTitle>
 
@@ -17,14 +19,11 @@
                     در بازه‌های ماهانه و سالیانه طراحی و پیاده‌سازی شده است.
                 </p>
 
-                <div class="d-flex gap-2">
+                @* <div class="d-flex gap-2">
                     <a class="btn btn-primary btn-lg" href="#">
                         <i class="bi bi-box-arrow-in-right ms-1"></i> ورود به سامانه
                     </a>
-                    @* <a class="btn btn-outline-primary btn-lg" href="#">
-                        <i class="bi bi-play-circle ms-1"></i> مشاهده دمو
-                    </a> *@
-                </div>
+                </div> *@
             </div>
 
             <div class="col-lg-5">

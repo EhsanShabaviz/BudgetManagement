@@ -6,7 +6,10 @@
 @using System.Globalization;
 @using BudgetManagement.Web.Extensions
 
+
 @inject IBudgetRepository BudgetRepository
+
+@attribute [Authorize(Policy = "User")]
 
 <h3>ویرایش اطلاعات</h3>
 

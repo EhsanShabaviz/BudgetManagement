@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using BudgetManagement.Web.Components.Layout
+@using Microsoft.AspNetCore.Components.Authorization
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -15,7 +17,28 @@
 </head>
 
 <body>
-    <Routes />
+    @* <Routes /> *@
+
+    <CascadingAuthenticationState>
+        <Router AppAssembly="@typeof(Program).Assembly">
+            <Found Context="routeData">
+                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                    <NotAuthorized>
+                        <RedirectToLogin />
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+                <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+            </Found>
+            <NotFound>
+                <LayoutView Layout="@typeof(MainLayout)">
+                    <p>صفحه مورد نظر پیدا نشد.</p>
+                </LayoutView>
+            </NotFound>
+        </Router>
+    </CascadingAuthenticationState>
+
+
+
     <script src="_framework/blazor.web.js"></script>
     <script src="_content/Blazor.PersianDatePicker/datepicker.min.js" type="text/javascript"></script>
 </body>

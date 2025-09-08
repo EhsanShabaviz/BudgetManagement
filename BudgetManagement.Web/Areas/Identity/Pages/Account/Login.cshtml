@@ -1,0 +1,99 @@
+﻿@page
+@model BudgetManagement.Web.Areas.Identity.Pages.Account.LoginModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "ورود به سامانه";
+    Layout = null; // چون می‌خوایم استایل Blazor رو مستقیم لود کنیم
+}
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- استایل‌های Blazor و Bootstrap -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/app.css" />
+    <link rel="stylesheet" href="~/BudgetManagement.Web.styles.css" />
+    <link href="~/_content/Blazor.PersianDatePicker/datepicker.css" rel="stylesheet" />
+
+    <title>@ViewData["Title"]</title>
+</head>
+<body>
+    <section class="hero d-flex align-items-center">
+        <div class="container">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-7">
+                    <span class="badge badge-soft rounded-pill px-3 py-2 mb-3">
+                        <i class="bi bi-lightning-charge me-1"></i> نسخه 1.0
+                    </span>
+
+                    <h1 class="display-5 fw-bold mb-3">سامانه نظام بودجه و اعتبارات</h1>
+
+                    <p class="lead text-secondary mb-4">
+                        📌 این سامانه برای محاسبه آنلاین آیتم‌های بودجه و مالی (شامل: مبلغ تعدیل، حداکثر اعتبار مورد نیاز، کسری اعتبار و ...)
+                        در بازه‌های ماهانه و سالیانه طراحی و پیاده‌سازی شده است.
+                    </p>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="glass-card p-4 p-md-5">
+                        <form method="post" novalidate>
+                            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                            <div class="mb-3">
+                                <label asp-for="Input.UserNameOrEmail" class="form-label"></label>
+                                <input asp-for="Input.UserNameOrEmail" class="form-control" />
+                                <span asp-validation-for="Input.UserNameOrEmail" class="invalid-feedback"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Input.Password" class="form-label"></label>
+                                <input asp-for="Input.Password" type="password" class="form-control" />
+                                <span asp-validation-for="Input.Password" class="invalid-feedback"></span>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input asp-for="Input.RememberMe" class="form-check-input" />
+                                <label asp-for="Input.RememberMe" class="form-check-label"></label>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">ورود</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- اسکریپت‌های اعتبارسنجی -->
+    <partial name="_ValidationScriptsPartial" />
+
+    <!-- اسکریپت‌های Blazor -->
+    <script src="~/_framework/blazor.web.js"></script>
+    <script src="~/_content/Blazor.PersianDatePicker/datepicker.min.js"></script>
+</body>
+</html>
+
+<style>
+    .hero {
+        min-height: 70vh;
+        background: radial-gradient(1000px 500px at 100% -10%, #e8f0ff 10%, transparent 50%), radial-gradient(800px 400px at -10% 0%, #fff6e6 10%, transparent 50%), linear-gradient(180deg, #ffffff 0%, #f7f9fc 100%);
+        padding: 5rem 0 3rem;
+    }
+
+    .glass-card {
+        backdrop-filter: blur(6px);
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        border-radius: 1.25rem;
+    }
+
+    .badge-soft {
+        background: #eef2ff;
+        color: #4338ca;
+        border: 1px solid #e0e7ff;
+    }
+</style>

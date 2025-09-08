@@ -2,12 +2,16 @@ using BudgetManagement.Application.Interfaces;
 using BudgetManagement.Application.Mappings;
 using BudgetManagement.Application.UseCases;
 using BudgetManagement.Application.Validators;
+using BudgetManagement.Infrastructure.Identity;
 using BudgetManagement.Infrastructure.Persistence;
 using BudgetManagement.Infrastructure.Repositories;
 using BudgetManagement.Infrastructure.Services.Excel;
 using BudgetManagement.Web.Common.Models;
 using BudgetManagement.Web.Components;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +19,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddRazorPages();
 
 // Application
 builder.Services.AddScoped<IBudgetImportUseCase, BudgetImportUseCase>();
@@ -43,8 +48,40 @@ builder.Services.AddDbContext<BudgetManagementDbContext>(options =>
             );
         }));
 
+builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+{
+    options.Password.RequiredLength = 8;
+    options.Password.RequireNonAlphanumeric = false;
+    options.User.RequireUniqueEmail = true;
+    options.SignIn.RequireConfirmedAccount = false;
+})
+.AddEntityFrameworkStores<BudgetManagementDbContext>()
+.AddDefaultTokenProviders();
+
+
+// تعریف نقش‌ها و سیاست‌ها
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", p => p.RequireRole("Admin"));
+    options.AddPolicy("UserManager", p => p.RequireRole("Admin", "UserManager"));
+    options.AddPolicy("User", p => p.RequireRole("Admin", "UserManager", "User"));
+});
+
+// پیکربندی کوکی‌ها
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Identity/Account/Login";// مسیر صفحه ورود
+    options.LogoutPath = "/Identity/Account/Logout";// مسیر صفحه خروج
+    options.AccessDeniedPath = "/Identity/Account/AccessDenied";// مسیر صفحه دسترسی غیرمجاز
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);// مدت اعتبار کوکی
+    options.SlidingExpiration = true;// تمدید خودکار اعتبار کوکی در صورت فعالیت کاربر
+});
+
 
 var app = builder.Build();
+
+//هر بار برنامه اجرا میشه، اگر نقش‌ها یا ادمین وجود نداشتند، ساخته میشه
+await IdentitySeed.EnsureSeedAsync(app.Services);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -57,8 +94,14 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 
-app.UseAntiforgery();
+app.UseStaticFiles();
+app.UseRouting();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseAntiforgery();
+app.MapRazorPages();   // Login.cshtml این خط برای 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

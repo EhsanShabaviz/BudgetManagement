@@ -1,0 +1,12 @@
+@code {
+    // کامپوننت کمکی برای ریدایرکت خودکار به لاگین
+
+        [Inject] NavigationManager Nav { get; set; } = default!;
+        protected override void OnInitialized()
+        {
+            // Nav.NavigateTo("/Login", true);
+        var returnUrl = Uri.EscapeDataString(Nav.Uri);
+        Nav.NavigateTo($"/Identity/Account/Login?ReturnUrl={returnUrl}", true);
+        }
+    
+}

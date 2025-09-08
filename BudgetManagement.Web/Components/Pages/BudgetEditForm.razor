@@ -11,6 +11,8 @@
 @inject IMapper Mapper
 @inject NavigationManager Nav
 
+@attribute [Authorize(Policy = "User")]
+
 <h4 class="mb-3">ویرایش رکورد بودجه</h4>
 
 @if (notFound || model is null)

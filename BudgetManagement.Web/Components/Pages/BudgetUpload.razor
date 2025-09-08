@@ -9,6 +9,8 @@
 @inject IBudgetImportUseCase ImportUseCase
 @inject IBudgetCalculationUseCase CalculationUseCase
 
+@attribute [Authorize(Policy = "User")]
+
 <h3>بارگذاری اطلاعات</h3>
 <div class="card shadow-sm border-0 mb-3" style="direction: rtl; text-align: right;">
     <div class="card-body bg-light rounded-3">

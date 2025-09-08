@@ -1,6 +1,8 @@
 ﻿using BudgetManagement.Domain.Entities;
+using BudgetManagement.Infrastructure.Identity;
 using DocumentFormat.OpenXml.InkML;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Data;
@@ -9,7 +11,7 @@ using System.Text.RegularExpressions;
 
 namespace BudgetManagement.Infrastructure.Persistence;
 
-public class BudgetManagementDbContext : DbContext
+public class BudgetManagementDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
 {
     public BudgetManagementDbContext(DbContextOptions<BudgetManagementDbContext> options)
         : base(options)
