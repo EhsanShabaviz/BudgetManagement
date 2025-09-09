@@ -62,7 +62,6 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 // تعریف نقش‌ها و سیاست‌ها
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AdminOnly", p => p.RequireRole("Admin"));
     options.AddPolicy("UserManager", p => p.RequireRole("Admin", "UserManager"));
     options.AddPolicy("User", p => p.RequireRole("Admin", "UserManager", "User"));
 });
@@ -73,7 +72,8 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Identity/Account/Login";// مسیر صفحه ورود
     options.LogoutPath = "/Identity/Account/Logout";// مسیر صفحه خروج
     options.AccessDeniedPath = "/Identity/Account/AccessDenied";// مسیر صفحه دسترسی غیرمجاز
-    options.ExpireTimeSpan = TimeSpan.FromHours(8);// مدت اعتبار کوکی
+    //options.ExpireTimeSpan = TimeSpan.FromHours(8);// مدت اعتبار کوکی
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(15);
     options.SlidingExpiration = true;// تمدید خودکار اعتبار کوکی در صورت فعالیت کاربر
 });
 

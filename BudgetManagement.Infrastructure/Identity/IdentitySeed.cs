@@ -30,6 +30,7 @@ namespace BudgetManagement.Infrastructure.Identity
             // کاربر ادمین
             var adminUserName = "admin";
             var adminEmail = "admin@budget.com";
+            var adminNationalCode = "1234567890";
             var admin = await userManager.FindByNameAsync(adminUserName);
             if (admin == null)
             {
@@ -37,10 +38,11 @@ namespace BudgetManagement.Infrastructure.Identity
                 {
                     UserName = adminUserName,
                     Email = adminEmail,
+                    NationalCode = adminNationalCode,
                     EmailConfirmed = true,
                     FullName = "System Administrator"
                 };
-                var createResult = await userManager.CreateAsync(admin, "Admin@12345"); // رمز را بعداً تغییر بده
+                var createResult = await userManager.CreateAsync(admin, "Admin@12345");// Change Password Later!
                 if (createResult.Succeeded)
                 {
                     await userManager.AddToRolesAsync(admin, new[] { "Admin", "UserManager" });

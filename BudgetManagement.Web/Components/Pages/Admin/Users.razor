@@ -1,0 +1,167 @@
+﻿@page "/admin/users"
+@rendermode InteractiveServer
+
+@attribute [Authorize(Roles = "Admin")]
+@using BudgetManagement.Infrastructure.Identity
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager Nav
+
+<h3>مدیریت کاربران</h3>
+
+<div class="mb-3">
+    <button class="btn btn-success" @onclick="CreateUser">کاربر جدید</button>
+</div>
+
+@if (vm is null)
+{
+    <p>در حال بارگذاری...</p>
+}
+else if (vm.Users.Count == 0)
+{
+    <p>هیچ کاربری یافت نشد.</p>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(resultMessage))
+    {
+        <div class="alert alert-info">@resultMessage</div>
+    }
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>نام و نام خانوادگی</th>
+                <th>کد ملی</th>
+                <th>نام کاربری</th>
+                <th>ایمیل</th>
+                <th>نقش‌ها</th>
+                <th style="width:160px">عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in vm.Users)
+            {
+                <tr>
+                    <td>@u.FullName</td>
+                    <td>@u.NationalCode</td>
+                    <td>@u.UserName</td>
+                    <td>@u.Email</td>
+                    <td>@string.Join(", ", vm.UserRoles.TryGetValue(u.Id, out var roles) ? roles : Array.Empty<string>())</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1" @onclick="() => EditUser(u.Id)">ویرایش</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => ConfirmDelete(u.Id)">حذف</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (deleteConfirm.Open)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,.4);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">حذف کاربر</h5></div>
+                <div class="modal-body">آیا از حذف این کاربر مطمئن هستید؟ این عملیات قابل بازگشت نیست.</div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseConfirm">انصراف</button>
+                    <button class="btn btn-danger" @onclick="DeleteUser">حذف</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private UsersViewModel? vm;
+    private DeleteConfirm deleteConfirm = new();
+    private string? resultMessage;
+
+    private class UsersViewModel
+    {
+        public List<ApplicationUser> Users { get; set; } = new();
+        public Dictionary<string, IList<string>> UserRoles { get; set; } = new();
+    }
+
+    private class DeleteConfirm
+    {
+        public bool Open { get; set; }
+        public string? UserId { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        var users = UserManager.Users.ToList();
+
+        var userRoles = new Dictionary<string, IList<string>>();
+        foreach (var u in users)
+        {
+            var roles = await UserManager.GetRolesAsync(u);
+            userRoles[u.Id] = roles;
+        }
+
+        vm = new UsersViewModel
+        {
+            Users = users,
+            UserRoles = userRoles
+        };
+    }
+
+    private void CreateUser() => Nav.NavigateTo("/admin/users/upsert");
+    private void EditUser(string id) => Nav.NavigateTo($"/admin/users/upsert/{id}");
+
+    private void ConfirmDelete(string id)
+    {
+        deleteConfirm = new DeleteConfirm { Open = true, UserId = id };
+        StateHasChanged();
+    }
+
+    private void CloseConfirm()
+    {
+        deleteConfirm = new DeleteConfirm();
+    }
+
+    private async Task DeleteUser()
+    {
+        if (string.IsNullOrWhiteSpace(deleteConfirm.UserId))
+            return;
+
+        var user = await UserManager.FindByIdAsync(deleteConfirm.UserId);
+        if (user != null)
+        {
+            // جلوگیری از حذف ادمین اصلی
+            if (user.UserName == "admin" || user.Email == "admin@local")
+            {
+                resultMessage = "کاربر ادمین اصلی قابل حذف نیست.";
+                CloseConfirm();
+                return;
+            }
+
+            // جلوگیری از حذف آخرین ادمین
+            var isAdmin = await UserManager.IsInRoleAsync(user, "Admin");
+            if (isAdmin)
+            {
+                var admins = await UserManager.GetUsersInRoleAsync("Admin");
+                if (admins.Count == 1)
+                {
+                    resultMessage = "نمی‌توانید آخرین ادمین سیستم را حذف کنید.";
+                    CloseConfirm();
+                    return;
+                }
+            }
+
+            var result = await UserManager.DeleteAsync(user);
+            resultMessage = result.Succeeded ? "کاربر حذف شد." : "خطا در حذف کاربر.";
+        }
+
+        await LoadUsers();
+        CloseConfirm();
+    }
+
+}

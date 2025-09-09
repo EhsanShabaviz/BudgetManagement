@@ -5,7 +5,7 @@
 
 <div class="page">
     @* فقط وقتی صفحه لاگین نیست *@
-    @if (!IsLoginPage)  
+    @if (!IsLoginPage)
     {
         <div class="sidebar">
             <NavMenu />
@@ -17,7 +17,8 @@
             @* <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a> *@
             <AuthorizeView>
                 <Authorized>
-                    <a href="/Identity/Account/Logout" >خروج</a>
+                    <a>@context.User.Identity!.Name</a>
+                    <a href="/Identity/Account/Logout">خروج</a>
                 </Authorized>
             </AuthorizeView>
         </div>
@@ -38,8 +39,6 @@
 
 @code {
     // private bool IsLoginPage => NavManager.Uri.EndsWith("/Login");
-    // private bool IsLoginPage => NavManager.Uri.EndsWith("/Login?ReturnUrl=%2F");
-    private bool IsLoginPage =>
-    NavManager.Uri.Contains("/Identity/Account/Login", StringComparison.OrdinalIgnoreCase);
+    private bool IsLoginPage => NavManager.Uri.EndsWith("/Login?ReturnUrl=%2F");
 
 }

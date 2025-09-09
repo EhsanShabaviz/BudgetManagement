@@ -1,0 +1,223 @@
+﻿@page "/admin/users/upsert/{Id?}"
+@rendermode InteractiveServer
+
+@attribute [Authorize(Roles = "Admin")]
+@using BudgetManagement.Infrastructure.Identity
+@using System.ComponentModel.DataAnnotations
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<ApplicationRole> RoleManager
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+
+<h3>@(isNew ? "ایجاد کاربر جدید" : "ویرایش کاربر")</h3>
+
+@if (model == null)
+{
+    <p>در حال بارگذاری...</p>
+}
+else
+{
+    <EditForm Model="@model" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label>نام و نام خانوادگی</label>
+            <InputText class="form-control" @bind-Value="model.FullName" />
+        </div>
+
+        <div class="mb-3">
+            <label>کد ملی</label>
+            <InputText class="form-control" @bind-Value="model.NationalCode" />
+        </div>
+
+        <div class="mb-3">
+            <label>نام کاربری</label>
+            <InputText class="form-control" @bind-Value="model.UserName" />
+        </div>
+
+        <div class="mb-3">
+            <label>ایمیل</label>
+            <InputText class="form-control" @bind-Value="model.Email" />
+        </div>
+
+
+        @if (isNew)
+        {
+            <div class="mb-3">
+                <label>رمز عبور</label>
+                <InputText class="form-control" type="password" @bind-Value="model.Password" />
+            </div>
+        }
+
+        <div class="mb-3">
+            <label>نقش‌ها</label>
+            @foreach (var role in allRoles)
+            {
+                <div class="form-check">
+                    <InputCheckbox class="form-check-input"
+                                   @bind-Value="model.SelectedRoles[role]" />
+                    <label class="form-check-label">@role</label>
+                </div>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <div class="alert @(message.Contains("خطا") ? "alert-danger" : "alert-success")">@message</div>
+        }
+
+        <button class="btn btn-primary" type="submit" disabled="@isSaving">
+            @(isSaving ? "در حال ذخیره..." : "ذخیره")
+        </button>
+        <button class="btn btn-secondary ms-2" type="button" @onclick="Cancel">انصراف</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public string? Id { get; set; }
+    private bool isNew => string.IsNullOrEmpty(Id);
+    private UserEditModel? model;
+    private List<string> allRoles = new();
+    private string? message;
+    private bool isSaving = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        allRoles = RoleManager.Roles.Select(r => r.Name!).ToList();
+
+        if (isNew)
+        {
+            model = new UserEditModel
+            {
+                SelectedRoles = allRoles.ToDictionary(r => r, r => false)
+            };
+        }
+        else
+        {
+            var user = await UserManager.FindByIdAsync(Id!);
+            if (user == null)
+            {
+                Nav.NavigateTo("/admin/users");
+                return;
+            }
+
+            var userRoles = await UserManager.GetRolesAsync(user);
+            model = new UserEditModel
+            {
+                Id = user.Id,
+                UserName = user.UserName!,
+                Email = user.Email!,
+                FullName = user.FullName,
+                NationalCode = user.NationalCode,
+                SelectedRoles = allRoles.ToDictionary(r => r, r => userRoles.Contains(r))
+            };
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        isSaving = true;
+        message = null;
+
+        // گرفتن اطلاعات کاربر فعلی
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var currentUser = authState.User;
+
+        // جلوگیری از حذف نقش Admin از خود کاربر
+        if (!isNew && model!.Id == UserManager.GetUserId(currentUser))
+        {
+            var stillAdmin = model.SelectedRoles.Any(r => r.Key == "Admin" && r.Value);
+            if (!stillAdmin)
+            {
+                message = "شما نمی‌توانید نقش Admin را از خودتان حذف کنید.";
+                isSaving = false;
+                return;
+            }
+        }
+
+        // جلوگیری از حذف آخرین ادمین
+        var admins = await UserManager.GetUsersInRoleAsync("Admin");
+        if (!isNew && admins.Count == 1 && admins.First().Id == model!.Id && !model.SelectedRoles["Admin"])
+        {
+            message = "نمی‌توانید آخرین ادمین سیستم را حذف کنید.";
+            isSaving = false;
+            return;
+        }
+
+        IdentityResult result;
+
+        if (isNew)
+        {
+            var newUser = new ApplicationUser
+            {
+                UserName = model!.UserName,
+                Email = model.Email,
+                FullName = model.FullName,
+                NationalCode = model.NationalCode,
+                EmailConfirmed = true
+            };
+
+            result = await UserManager.CreateAsync(newUser, model.Password!);
+            if (result.Succeeded)
+            {
+                await UserManager.AddToRolesAsync(newUser, model.SelectedRoles.Where(r => r.Value).Select(r => r.Key));
+                message = "کاربر با موفقیت ایجاد شد.";
+            }
+        }
+        else
+        {
+            var user = await UserManager.FindByIdAsync(model!.Id!);
+            if (user == null) return;
+
+            user.UserName = model.UserName;
+            user.Email = model.Email;
+            user.FullName = model.FullName;
+            user.NationalCode = model.NationalCode;
+
+            result = await UserManager.UpdateAsync(user);
+
+            if (result.Succeeded)
+            {
+                var currentRoles = await UserManager.GetRolesAsync(user);
+                var selectedRoles = model.SelectedRoles.Where(r => r.Value).Select(r => r.Key).ToList();
+
+                var rolesToAdd = selectedRoles.Except(currentRoles);
+                var rolesToRemove = currentRoles.Except(selectedRoles);
+
+                if (rolesToAdd.Any())
+                    await UserManager.AddToRolesAsync(user, rolesToAdd);
+
+                if (rolesToRemove.Any())
+                    await UserManager.RemoveFromRolesAsync(user, rolesToRemove);
+
+                message = "کاربر با موفقیت ویرایش شد.";
+            }
+        }
+
+        isSaving = false;
+
+        if (result.Succeeded)
+        {
+            await Task.Delay(1000);
+            Nav.NavigateTo("/admin/users");
+        }
+        else
+        {
+            message = string.Join(" | ", result.Errors.Select(e => e.Description));
+        }
+    }
+
+    private void Cancel() => Nav.NavigateTo("/admin/users");
+
+    public class UserEditModel
+    {
+        public string? Id { get; set; }
+        [Required] public string UserName { get; set; } = "";
+        [Required, EmailAddress] public string Email { get; set; } = "";
+        [Required] public string FullName { get; set; } = "";
+        [Required, MaxLength(10)] public string NationalCode { get; set; } = "";
+        public string? Password { get; set; }
+        public Dictionary<string, bool> SelectedRoles { get; set; } = new();
+    }
+}

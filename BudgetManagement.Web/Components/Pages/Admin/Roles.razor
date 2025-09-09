@@ -1,0 +1,168 @@
+﻿@page "/admin/roles"
+@using System.ComponentModel.DataAnnotations
+@rendermode InteractiveServer
+
+@attribute [Authorize(Roles = "Admin")]
+@inject RoleManager<ApplicationRole> RoleManager
+@inject UserManager<ApplicationUser> UserManager
+
+<h3>مدیریت نقش‌ها</h3>
+
+<div class="mb-3">
+    <EditForm Model="@newRole" OnValidSubmit="CreateRole">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="input-group">
+            <InputText class="form-control" @bind-Value="newRole.Name" placeholder="نام نقش جدید" />
+            <InputText class="form-control" @bind-Value="newRole.Description" placeholder="توضیحات نقش جدید" />
+            <button class="btn btn-success" type="submit">ایجاد نقش</button>
+        </div>
+    </EditForm>
+</div>
+
+@if (roles == null)
+{
+    <p>در حال بارگذاری...</p>
+}
+else if (roles.Count == 0)
+{
+    <p>هیچ نقشی یافت نشد.</p>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="alert @(message.Contains("خطا") ? "alert-danger" : "alert-success")">@message</div>
+    }
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>نام نقش</th>
+                <th>توضیحات</th>
+                <th style="width:120px">عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var role in roles)
+            {
+                <tr>
+                    <td>@role.Name</td>
+                    <td>@role.Description</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" @onclick="() => ConfirmDelete(role.Id)">حذف</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (deleteConfirm.Open)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,.4);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">حذف کاربر</h5></div>
+                <div class="modal-body">آیا از حذف این نقش مطمئن هستید؟ این عملیات قابل بازگشت نیست.</div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseConfirm">انصراف</button>
+                    <button class="btn btn-danger" @onclick="DeleteRole">حذف</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    private DeleteConfirm deleteConfirm = new();
+    private List<ApplicationRole>? roles;
+    private ApplicationRole newRole = new();
+
+    private class DeleteConfirm
+    {
+        public bool Open { get; set; }
+        public string? RoleId { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRoles();
+    }
+
+    private async Task LoadRoles()
+    {
+        roles = RoleManager.Roles.ToList();
+    }
+
+    private string? message;
+
+    private async Task CreateRole()
+    {
+        if (string.IsNullOrWhiteSpace(newRole.Name))
+            return;
+
+        var exists = await RoleManager.RoleExistsAsync(newRole.Name);
+        if (!exists)
+        {
+            var result = await RoleManager.CreateAsync(new ApplicationRole
+            {
+                Name = newRole.Name,
+                Description = newRole.Description
+            });
+
+            if (result.Succeeded)
+                message = "نقش با موفقیت ایجاد شد.";
+            else
+                message = "خطا در ایجاد نقش.";
+
+            newRole = new ApplicationRole();
+            await LoadRoles();
+        }
+    }
+
+    private void ConfirmDelete(string id)
+    {
+        deleteConfirm = new DeleteConfirm { Open = true, RoleId = id };
+        StateHasChanged();
+    }
+
+    private void CloseConfirm()
+    {
+        deleteConfirm = new DeleteConfirm();
+    }
+
+    private async Task DeleteRole()
+    {
+        if (string.IsNullOrWhiteSpace(deleteConfirm.RoleId))
+            return;
+
+        var role = await RoleManager.FindByIdAsync(deleteConfirm.RoleId);
+        if (role != null)
+        {
+            if (role.Name == "Admin")
+            {
+                message = "نقش Admin قابل حذف نیست.";
+                CloseConfirm();
+                return;
+            }
+
+            // بررسی اینکه نقش به کاربری اختصاص داده نشده باشد
+            var usersInRole = await UserManager.GetUsersInRoleAsync(role.Name);
+            if (usersInRole.Any())
+            {
+                message = $"این نقش به {usersInRole.Count} کاربر اختصاص داده شده و قابل حذف نیست.";
+                CloseConfirm();
+                return;
+            }
+
+            var result = await RoleManager.DeleteAsync(role);
+            message = result.Succeeded ? "نقش حذف شد." : "خطا در حذف نقش.";
+            await LoadRoles();
+            CloseConfirm();
+        }
+    }
+
+
+}
