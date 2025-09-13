@@ -1,24 +1,46 @@
 ﻿@page "/admin/roles"
-@using System.ComponentModel.DataAnnotations
 @rendermode InteractiveServer
-
 @attribute [Authorize(Roles = "Admin")]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.EntityFrameworkCore
 @inject RoleManager<ApplicationRole> RoleManager
 @inject UserManager<ApplicationUser> UserManager
 
-<h3>مدیریت نقش‌ها</h3>
+<h3 class="mb-4">مدیریت نقش‌ها</h3>
 
-<div class="mb-3">
-    <EditForm Model="@newRole" OnValidSubmit="CreateRole">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-        <div class="input-group">
-            <InputText class="form-control" @bind-Value="newRole.Name" placeholder="نام نقش جدید" />
-            <InputText class="form-control" @bind-Value="newRole.Description" placeholder="توضیحات نقش جدید" />
-            <button class="btn btn-success" type="submit">ایجاد نقش</button>
-        </div>
-    </EditForm>
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">ایجاد نقش جدید</h5>
+    </div>
+    <div class="card-body">
+        <EditForm Model="@newRole" OnValidSubmit="CreateRole">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">نام نقش</label>
+                    <InputText class="form-control" @bind-Value="newRole.Name" placeholder="مثلاً: Admin یا Manager" />
+                    @* <ValidationMessage For="@(() => newRole.Name)" /> *@
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">توضیحات</label>
+                    <InputText class="form-control" @bind-Value="newRole.Description" placeholder="توضیح کوتاه درباره نقش" />
+                    @* <ValidationMessage For="@(() => newRole.Description)" /> *@
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-success" type="submit">ایجاد نقش</button>
+            </div>
+
+        </EditForm>
+    </div>
 </div>
+
+
 
 @if (roles == null)
 {
@@ -80,6 +102,16 @@ else
     private List<ApplicationRole>? roles;
     private ApplicationRole newRole = new();
 
+    // public class ApplicationRole : IdentityRole
+    // {
+    //     [Required(ErrorMessage = "نام نقش الزامی است")]
+    //     public override string Name { get; set; } = string.Empty;
+
+    //     [Required(ErrorMessage = "توضیحات نقش الزامی است")]
+    //     public string Description { get; set; } = string.Empty;
+    // }
+
+
     private class DeleteConfirm
     {
         public bool Open { get; set; }
@@ -93,7 +125,8 @@ else
 
     private async Task LoadRoles()
     {
-        roles = RoleManager.Roles.ToList();
+        // roles = RoleManager.Roles.ToList();
+        roles = await RoleManager.Roles.ToListAsync();
     }
 
     private string? message;

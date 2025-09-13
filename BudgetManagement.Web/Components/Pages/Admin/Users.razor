@@ -3,14 +3,70 @@
 
 @attribute [Authorize(Roles = "Admin")]
 @using BudgetManagement.Infrastructure.Identity
+@using Microsoft.EntityFrameworkCore
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager Nav
 
-<h3>مدیریت کاربران</h3>
+<h3 class="mb-4">مدیریت کاربران</h3>
+
+@if(vm is not null)
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center py-3">
+                    <i class="bi bi-people-fill fs-3 text-secondary mb-1"></i>
+                    <h6 class="text-muted mb-1">کل کاربران</h6>
+                    <p class="fs-4 fw-bold mb-0">@vm.Users.Count</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center py-3">
+                    <i class="bi bi-person-check-fill fs-3 text-success mb-1"></i>
+                    <h6 class="text-muted mb-1">کاربران فعال</h6>
+                    <p class="fs-4 fw-bold mb-0">@vm.Users.Count(u => u.LockoutEnd == null)</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center py-3">
+                    <i class="bi bi-person-x-fill fs-3 text-danger mb-1"></i>
+                    <h6 class="text-muted mb-1">کاربران غیرفعال</h6>
+                    <p class="fs-4 fw-bold mb-0">@vm.Users.Count(u => u.LockoutEnd != null)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+}
+
 
 <div class="mb-3">
     <button class="btn btn-success" @onclick="CreateUser">کاربر جدید</button>
 </div>
+
+<div class="mb-3 row">
+    <div class="col-md-4">
+        <input type="text" class="form-control" placeholder="جستجو بر اساس نام کاربری یا ایمیل..."
+               @bind="searchTerm" @bind:event="oninput" />
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" @bind="selectedRole">
+            <option value="">همه نقش‌ها</option>
+            @foreach (var role in allRoles)
+            {
+                <option value="@role">@role</option>
+            }
+        </select>
+    </div>
+</div>
+
 
 @if (vm is null)
 {
@@ -27,6 +83,7 @@ else
         <div class="alert alert-info">@resultMessage</div>
     }
 
+    
     <table class="table table-striped">
         <thead>
             <tr>
@@ -39,7 +96,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var u in vm.Users)
+            @foreach (var u in FilteredUsers)
             {
                 <tr>
                     <td>@u.FullName</td>
@@ -50,11 +107,36 @@ else
                     <td>
                         <button class="btn btn-sm btn-primary me-1" @onclick="() => EditUser(u.Id)">ویرایش</button>
                         <button class="btn btn-sm btn-danger" @onclick="() => ConfirmDelete(u.Id)">حذف</button>
+                        <button class="btn btn-sm mt-2 @(u.LockoutEnd == null ? "btn-warning" : "btn-success")"
+                                @onclick="() => ToggleUserStatus(u.Id)">
+                            @(u.LockoutEnd == null ? "غیرفعال‌کردن" : "فعال‌کردن")
+                        </button>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
+
+    @if (TotalPages > 1)
+    {
+        <nav>
+            <ul class="pagination">
+                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => GoToPage(currentPage - 1)">قبلی</button>
+                </li>
+                @for (int i = 1; i <= TotalPages; i++)
+                {
+                    <li class="page-item @(currentPage == i ? "active" : "")">
+                        <button class="page-link" @onclick="() => GoToPage(i)">@i</button>
+                    </li>
+                }
+                <li class="page-item @(currentPage == TotalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => GoToPage(currentPage + 1)">بعدی</button>
+                </li>
+            </ul>
+        </nav>
+    }
+
 }
 
 @if (deleteConfirm.Open)
@@ -90,14 +172,36 @@ else
         public string? UserId { get; set; }
     }
 
+    private string searchTerm = "";
+    private string selectedRole = "";
+    private List<string> allRoles = new();
+
+
     protected override async Task OnInitializedAsync()
     {
         await LoadUsers();
+
+        // گرفتن همه کاربران از دیتابیس
+        var users = await UserManager.Users.ToListAsync();
+
+        // گرفتن نقش‌ها در حافظه
+        var roleSet = new HashSet<string>();
+        foreach (var user in users)
+        {
+            var roles = await UserManager.GetRolesAsync(user);
+            foreach (var role in roles)
+                roleSet.Add(role);
+        }
+
+        allRoles = roleSet.ToList();
     }
+
 
     private async Task LoadUsers()
     {
-        var users = UserManager.Users.ToList();
+        // var users = UserManager.Users.ToList();
+        var users = await UserManager.Users.ToListAsync();
+
 
         var userRoles = new Dictionary<string, IList<string>>();
         foreach (var u in users)
@@ -113,6 +217,38 @@ else
         };
     }
 
+    private IEnumerable<ApplicationUser> FilteredUsers =>
+    vm!.Users
+        .Where(u =>
+            (string.IsNullOrEmpty(searchTerm) ||
+             u.UserName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             u.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+            &&
+            (string.IsNullOrEmpty(selectedRole) ||
+             (vm.UserRoles.ContainsKey(u.Id) && vm.UserRoles[u.Id].Contains(selectedRole)))
+        )
+        .Skip((currentPage - 1) * pageSize)
+        .Take(pageSize);
+
+
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private int TotalPages => (int)Math.Ceiling((double)FilteredCount / pageSize);
+    private int FilteredCount => vm == null ? 0 :
+        vm.Users.Count(u =>
+            (string.IsNullOrEmpty(searchTerm) ||
+             u.UserName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             u.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+            &&
+            (string.IsNullOrEmpty(selectedRole) ||
+             (vm.UserRoles.ContainsKey(u.Id) && vm.UserRoles[u.Id].Contains(selectedRole)))
+        );
+    private void GoToPage(int page)
+    {
+        if (page >= 1 && page <= TotalPages)
+            currentPage = page;
+    }
+
     private void CreateUser() => Nav.NavigateTo("/admin/users/upsert");
     private void EditUser(string id) => Nav.NavigateTo($"/admin/users/upsert/{id}");
 
@@ -125,6 +261,24 @@ else
     private void CloseConfirm()
     {
         deleteConfirm = new DeleteConfirm();
+    }
+
+    private async Task ToggleUserStatus(string userId)
+    {
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user == null) return;
+
+        if (user.LockoutEnd == null)
+        {
+            user.LockoutEnd = DateTimeOffset.MaxValue; // غیرفعال
+        }
+        else
+        {
+            user.LockoutEnd = null; // فعال
+        }
+
+        await UserManager.UpdateAsync(user);
+        await LoadUsers();
     }
 
     private async Task DeleteUser()

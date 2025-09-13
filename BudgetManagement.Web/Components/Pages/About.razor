@@ -1,0 +1,87 @@
+﻿@page "/About"
+@attribute [Authorize]
+
+<section class="hero d-flex align-items-center text-end mt-5">
+    <div class="container">
+        <div class="row g-4 align-items-center">
+            <!-- ستون متن -->
+            <div class="col-lg-7">
+                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 mb-3 shadow-sm">
+                    <i class="bi bi-lightning-charge me-1"></i> نسخه 1.0
+                </span>
+
+                <h1 class="display-5 fw-bold mb-4 text-gradient">سامانه نظام بودجه و اعتبارات</h1>
+
+                <p class="lead text-secondary mb-4">
+                    📌 <strong>سامانه نظام بودجه و اعتبارات</strong> یک برنامه تحت وب مبتنی بر <strong>Blazor Server</strong> است که با معماری تمیز (Clean Architecture) و اصول توسعه نرم‌افزار مدرن طراحی و پیاده‌سازی شده است.
+                    این سامانه به سازمان‌ها و نهادهای دولتی کمک می‌کند تا فرآیند <strong>مدیریت و محاسبه بودجه پروژه‌ها</strong> را با دقت، سرعت و شفافیت بالا انجام دهند.
+                </p>
+
+                <p class="text-muted mb-3">
+                    این سامانه قابلیت محاسبه لحظه‌ای <strong>مبلغ تعدیل</strong>، <strong>حداکثر اعتبار مورد نیاز</strong> و <strong>کسری اعتبار</strong> را دارد و گزارش‌های جامع ماهانه و سالانه را با امکان مقایسه روند و ذخیره‌سازی نتایج ارائه می‌دهد.
+                    همچنین با استفاده از معماری چندلایه و جداسازی مسئولیت‌ها، نگهداشت‌پذیری و توسعه‌پذیری سیستم تضمین شده است.
+                </p>
+
+                <p class="text-muted">
+                    از دیگر ویژگی‌های این سامانه می‌توان به <strong>رابط کاربری واکنش‌گرا</strong>، <strong>امنیت بالا</strong>، <strong>پشتیبانی از چند کاربر و نقش</strong>، و <strong>امکان یکپارچه‌سازی با سایر سامانه‌های مالی</strong> اشاره کرد.
+                </p>
+            </div>
+
+            <!-- ستون ویژگی‌ها -->
+            <div class="col-lg-5">
+                <div class="glass-card p-4 p-md-5 shadow-lg rounded-4 border border-light-subtle bg-white bg-opacity-75">
+                    <!-- ویژگی 1 -->
+                    <div class="d-flex align-items-start gap-3 mb-4">
+                        <div class="icon-wrap text-primary bg-primary bg-opacity-10 p-3 rounded-circle">
+                            <i class="bi bi-calculator-fill fs-2"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1">محاسبات پویا و دقیق</h5>
+                            <p class="mb-0 text-secondary small">
+                                محاسبه خودکار و لحظه‌ای شاخص‌های مالی شامل مبلغ تعدیل، بیشینه اعتبار و کسری اعتبار با الگوریتم‌های بهینه.
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <!-- ویژگی 2 -->
+                    <div class="d-flex align-items-start gap-3 mb-4">
+                        <div class="icon-wrap text-success bg-success bg-opacity-10 p-3 rounded-circle">
+                            <i class="bi bi-graph-up fs-2"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1">گزارش‌های تحلیلی و دوره‌ای</h5>
+                            <p class="mb-0 text-secondary small">
+                                ارائه گزارش‌های ماهانه و سالانه با نمودارهای تحلیلی، مقایسه روند و قابلیت خروجی گرفتن در فرمت‌های مختلف.
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <!-- ویژگی 3 -->
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="icon-wrap text-warning bg-warning bg-opacity-10 p-3 rounded-circle">
+                            <i class="bi bi-shield-lock-fill fs-2"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1">امنیت و کنترل دسترسی</h5>
+                            <p class="mb-0 text-secondary small">
+                                مدیریت کاربران و نقش‌ها با سطوح دسترسی متفاوت و رعایت استانداردهای امنیتی روز دنیا.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- بخش کپی‌رایت -->
+        <div class="text-center mt-5">
+            <small class="text-muted">
+                &copy; 2025 Designed & Developed by <strong>Ehsan Shabaviz</strong>
+            </small>
+        </div>
+    </div>
+</section>
+

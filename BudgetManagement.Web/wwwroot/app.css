@@ -125,7 +125,7 @@ h1:focus {
 .highlight-number {
     background-color: #fff3cd;
     font-weight: bold;
-/*    text-align: left;*/
+    /*    text-align: left;*/
 }
 
 .sortable {
@@ -146,8 +146,88 @@ h1:focus {
 
 .table thead th {
     background-color: #57A7FF;
-    color: white; 
+    color: white;
 }
 
+/*چک‌باکس*/
+.roles-box {
+    border: 1px solid #ddd; /* کادر کلی */
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* فاصله بین آیتم‌ها */
+}
 
+.role-item {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* فاصله بین چک‌باکس و متن */
+    padding: 5px 10px;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+}
+
+    .role-item input[type="checkbox"] {
+        margin: 0; /* حذف فاصله پیش‌فرض */
+    }
+
+/*گزارش کاربران*/
+.card {
+    background: lavenderblush;
+    border-radius: 12px;
+    transition: transform 0.2s ease-in-out;
+}
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+
+/* رنگ بکگراند و متن در حالت hover */
+/*.userMenu-hover:hover {*/
+    /*background-color: #e7f1ff;*/ /* Blue Light */
+    /*background-color: #dde3ea;*/ /*Gray of Google*/
+    /*background: rgba(68,71,70,.08);*/ /*Gray of Google*/
+    /*color: #0d6efd;*/
+/*}*/
+
+
+.userMenuTop {
+    font-size: 15px;
+    background-color: #ffffff;
+    border-top-right-radius: 15px;
+    border-top-left-radius: 15px;
+    margin-bottom: 2px;
+}
+
+    .userMenuTop:hover {
+        background-color: rgba(68,71,70,.08); /* خاکستری گوگل */
+    }
+
+.userMenuBottom {
+    font-size: 15px;
+    background-color: #ffffff;
+    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    /*    margin-bottom: 2px;*/
+}
+
+    .userMenuBottom:hover {
+        background-color: rgba(68,71,70,.08); /* خاکستری گوگل */
+    }
+
+.about-btn-hover {
+    text-align: center;
+    padding: 6px 12px; /* کمی فاصله داخلی برای شبیه دکمه شدن */
+    border-radius: 6px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+    .about-btn-hover:hover {
+        background-color: rgba(68,71,70,.08); /* خاکستری گوگل */
+        color: #000;
+        text-decoration: none; 
+    }
 

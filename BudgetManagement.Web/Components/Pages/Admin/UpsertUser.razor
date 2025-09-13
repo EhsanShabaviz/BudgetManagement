@@ -4,6 +4,7 @@
 @attribute [Authorize(Roles = "Admin")]
 @using BudgetManagement.Infrastructure.Identity
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.EntityFrameworkCore
 @inject UserManager<ApplicationUser> UserManager
 @inject RoleManager<ApplicationRole> RoleManager
 @inject NavigationManager Nav
@@ -11,12 +12,29 @@
 
 <h3>@(isNew ? "ایجاد کاربر جدید" : "ویرایش کاربر")</h3>
 
+@if (!string.IsNullOrEmpty(message))
+{
+    @* <div class="alert @(message.Contains("خطا") ? "alert-danger" : "alert-success")">@message</div> *@
+    <div class="alert mt-3 @(
+         message == "کاربر با موفقیت ایجاد شد." || message == "کاربر با موفقیت ویرایش شد." || message.Contains("رمز عبور جدید")
+         ? "alert-success" : "alert-danger")">
+    @message
+</div>
+}
+
 @if (model == null)
 {
     <p>در حال بارگذاری...</p>
 }
 else
 {
+    @if (!isNew)
+    {
+        <button type="button" class="btn btn-warning ms-2 mb-3 mt-4" @onclick="() => ShowResetPasswordModal()">
+            ریست رمز عبور
+        </button>
+    }
+
     <EditForm Model="@model" OnValidSubmit="HandleValidSubmit">
         <DataAnnotationsValidator />
         <ValidationSummary />
@@ -28,13 +46,20 @@ else
 
         <div class="mb-3">
             <label>کد ملی</label>
-            <InputText class="form-control" @bind-Value="model.NationalCode" />
+            @* <InputText class="form-control" @bind-Value="model.NationalCode" /> *@
+            <InputText class="form-control" @bind-Value="model.NationalCode"
+                       maxlength="10"
+                       inputmode="numeric"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+            @* <ValidationMessage For="@(() => model.NationalCode)" /> *@
+
         </div>
 
         <div class="mb-3">
             <label>نام کاربری</label>
-            <InputText class="form-control" @bind-Value="model.UserName" />
+            <InputText class="form-control" autocomplete="off" @bind-Value="model.UserName" />
         </div>
+
 
         <div class="mb-3">
             <label>ایمیل</label>
@@ -46,32 +71,57 @@ else
         {
             <div class="mb-3">
                 <label>رمز عبور</label>
-                <InputText class="form-control" type="password" @bind-Value="model.Password" />
+                <InputText class="form-control" type="password" autocomplete="new-password" @bind-Value="model.Password" />
+            </div>
+            <div class="mb-3">
+                <label>تکرار رمز عبور</label>
+                <InputText class="form-control" type="password" autocomplete="new-password" @bind-Value="model.ConfirmPassword" />
             </div>
         }
 
-        <div class="mb-3">
-            <label>نقش‌ها</label>
-            @foreach (var role in allRoles)
-            {
-                <div class="form-check">
-                    <InputCheckbox class="form-check-input"
-                                   @bind-Value="model.SelectedRoles[role]" />
-                    <label class="form-check-label">@role</label>
-                </div>
-            }
+
+        <div class="mb-3 roles-container">
+            <label class="d-block">نقش‌ها</label>
+            <div class="roles-box">
+                @foreach (var role in allRoles)
+                {
+                    <label class="role-item">
+                        <InputCheckbox @bind-Value="model.SelectedRoles[role]" />
+                        <span>@role</span>
+                    </label>
+                }
+            </div>
         </div>
 
-        @if (!string.IsNullOrEmpty(message))
-        {
-            <div class="alert @(message.Contains("خطا") ? "alert-danger" : "alert-success")">@message</div>
-        }
+
+
 
         <button class="btn btn-primary" type="submit" disabled="@isSaving">
             @(isSaving ? "در حال ذخیره..." : "ذخیره")
         </button>
         <button class="btn btn-secondary ms-2" type="button" @onclick="Cancel">انصراف</button>
     </EditForm>
+
+    @if (resetPasswordConfirm)
+    {
+        <div class="modal fade show d-block" style="background: rgba(0,0,0,.4);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header"><h5 class="modal-title">ریست رمز عبور</h5></div>
+                    <div class="modal-body">
+                        آیا مطمئن هستید که می‌خواهید رمز عبور این کاربر را ریست کنید؟
+                        <br />
+                        <small>یک رمز موقت تولید و برای کاربر ست می‌شود.</small>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @onclick="() => resetPasswordConfirm = false">انصراف</button>
+                        <button class="btn btn-warning" @onclick="ResetPassword">تأیید</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
 }
 
 @code {
@@ -81,6 +131,7 @@ else
     private List<string> allRoles = new();
     private string? message;
     private bool isSaving = false;
+    private bool resetPasswordConfirm = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -120,7 +171,6 @@ else
         isSaving = true;
         message = null;
 
-        // گرفتن اطلاعات کاربر فعلی
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var currentUser = authState.User;
 
@@ -149,9 +199,40 @@ else
 
         if (isNew)
         {
+            // 🔹 چک تکراری بودن در ایجاد
+            if (await UserManager.Users.AnyAsync(u => u.FullName == model!.FullName))
+            {
+                message = "نام و نام خانوادگی تکراری است.";
+                isSaving = false; return;
+            }
+            if (await UserManager.Users.AnyAsync(u => u.NationalCode == model.NationalCode))
+            {
+                message = "کد ملی تکراری است.";
+                isSaving = false; return;
+            }
+            if (await UserManager.FindByNameAsync(model.UserName) != null ||
+                await UserManager.FindByEmailAsync(model.UserName) != null)
+            {
+                message = "نام کاربری تکراری است.";
+                isSaving = false; return;
+            }
+
+            if (await UserManager.FindByEmailAsync(model.Email) != null)
+            {
+                message = "ایمیل تکراری است.";
+                isSaving = false; return;
+            }
+
+            if (model.Password != model.ConfirmPassword)
+            {
+                message = "رمز عبور و تکرار آن یکسان نیستند.";
+                isSaving = false;
+                return;
+            }
+
             var newUser = new ApplicationUser
             {
-                UserName = model!.UserName,
+                UserName = model.UserName,
                 Email = model.Email,
                 FullName = model.FullName,
                 NationalCode = model.NationalCode,
@@ -170,10 +251,34 @@ else
             var user = await UserManager.FindByIdAsync(model!.Id!);
             if (user == null) return;
 
-            user.UserName = model.UserName;
-            user.Email = model.Email;
+            // 🔹 چک تکراری بودن در ویرایش (به جز خود کاربر)
+            if (await UserManager.Users.AnyAsync(u => u.FullName == model.FullName && u.Id != user.Id))
+            {
+                message = "نام و نام خانوادگی تکراری است.";
+                isSaving = false; return;
+            }
+            if (await UserManager.Users.AnyAsync(u => u.NationalCode == model.NationalCode && u.Id != user.Id))
+            {
+                message = "کد ملی تکراری است.";
+                isSaving = false; return;
+            }
+            if (await UserManager.Users.AnyAsync(u => u.UserName == model.UserName && u.Id != user.Id) ||
+                await UserManager.Users.AnyAsync(u => u.Email == model.UserName && u.Id != user.Id))
+            {
+                message = "نام کاربری تکراری است.";
+                isSaving = false; return;
+            }
+
+            if (await UserManager.Users.AnyAsync(u => u.Email == model.Email && u.Id != user.Id))
+            {
+                message = "ایمیل تکراری است.";
+                isSaving = false; return;
+            }
+
             user.FullName = model.FullName;
             user.NationalCode = model.NationalCode;
+            user.UserName = model.UserName;
+            user.Email = model.Email;
 
             result = await UserManager.UpdateAsync(user);
 
@@ -210,14 +315,96 @@ else
 
     private void Cancel() => Nav.NavigateTo("/admin/users");
 
-    public class UserEditModel
+    public class UserEditModel : IValidatableObject
     {
         public string? Id { get; set; }
-        [Required] public string UserName { get; set; } = "";
-        [Required, EmailAddress] public string Email { get; set; } = "";
-        [Required] public string FullName { get; set; } = "";
-        [Required, MaxLength(10)] public string NationalCode { get; set; } = "";
+
+        [Required(ErrorMessage = "نام و نام خانوادگی الزامی است")]
+        public string FullName { get; set; } = "";
+
+        [Required(ErrorMessage = "کد ملی الزامی است")]
+        [RegularExpression(@"^\d{10}$", ErrorMessage = "کد ملی باید ۱۰ رقم باشد")]
+        public string NationalCode { get; set; } = "";
+
+
+        [Required(ErrorMessage = "نام کاربری الزامی است")]
+        public string UserName { get; set; } = "";
+
+        [Required(ErrorMessage = "ایمیل الزامی است"), EmailAddress]
+        public string Email { get; set; } = "";
+
         public string? Password { get; set; }
+
+        [Compare("Password", ErrorMessage = "رمز عبور و تکرار آن یکسان نیستند")]
+        public string? ConfirmPassword { get; set; }
+
         public Dictionary<string, bool> SelectedRoles { get; set; } = new();
+
+        // اعتبارسنجی شرطی
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            var isNew = string.IsNullOrEmpty(Id);
+
+            if (isNew)
+            {
+                if (string.IsNullOrWhiteSpace(Password))
+                    yield return new ValidationResult("رمز عبور الزامی است", new[] { nameof(Password) });
+
+                if (string.IsNullOrWhiteSpace(ConfirmPassword))
+                    yield return new ValidationResult("تکرار رمز عبور الزامی است", new[] { nameof(ConfirmPassword) });
+
+                if (!string.IsNullOrWhiteSpace(Password) && Password != ConfirmPassword)
+                    yield return new ValidationResult("رمز عبور و تکرار آن یکسان نیستند", new[] { nameof(ConfirmPassword) });
+            }
+        }
     }
+
+    private void ShowResetPasswordModal()
+    {
+        resetPasswordConfirm = true;
+    }
+
+    private async Task ResetPassword()
+    {
+        resetPasswordConfirm = false;
+
+        var user = await UserManager.FindByIdAsync(model!.Id!);
+        if (user == null)
+        {
+            message = "کاربر یافت نشد.";
+            return;
+        }
+
+        // تولید رمز موقت امن
+        var tempPassword = GenerateSecurePassword();
+
+        // گرفتن توکن ریست
+        var token = await UserManager.GeneratePasswordResetTokenAsync(user);
+
+        // ریست رمز
+        var result = await UserManager.ResetPasswordAsync(user, token, tempPassword);
+
+        if (result.Succeeded)
+        {
+            message = $"رمز عبور جدید: {tempPassword} (لطفاً به کاربر اطلاع دهید)";
+        }
+        else
+        {
+            message = string.Join(" | ", result.Errors.Select(e => e.Description));
+        }
+    }
+
+    // متد تولید رمز موقت
+    private string GenerateSecurePassword(int length = 10)
+    {
+        const string valid = "ABCDEFGHJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789!@$?_-";
+        var res = new char[length];
+        var rnd = new Random();
+        for (int i = 0; i < length; i++)
+        {
+            res[i] = valid[rnd.Next(valid.Length)];
+        }
+        return new string(res);
+    }
+
 }

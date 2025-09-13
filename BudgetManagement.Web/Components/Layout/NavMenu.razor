@@ -18,16 +18,24 @@
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="BudgetUpload">
+            <NavLink class="nav-link" href="BudgetUpload" Match="NavLinkMatch.All">
                 <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span>&nbsp; بارگذاری اطلاعات
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="BudgetEdit">
+            <NavLink class="nav-link" href="BudgetEdit" Match="NavLinkMatch.All">
                 @* <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span>&nbsp; ویرایش اطلاعات *@
                 <span class="align-items-center">
                     <span class="bi bi-pencil-fill fs-5" aria-hidden="true"></span>&nbsp; ویرایش اطلاعات
+                </span>
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="About" Match="NavLinkMatch.All">
+                <span class="align-items-center">
+                    <span class="bi bi-info-circle-fill fs-5" aria-hidden="true"></span>&nbsp; درباره سامانه
                 </span>
             </NavLink>
         </div>
@@ -41,13 +49,13 @@
             </div>
 
             <div class="nav-item px-4">
-                <NavLink class="nav-link" href="/admin/users">
+                <NavLink class="nav-link" href="/admin/users" Match="NavLinkMatch.All">
                     <span class="bi bi-people-fill fs-6" aria-hidden="true"></span>&nbsp; مدیریت کاربران
                 </NavLink>
             </div>
 
             <div class="nav-item px-4">
-                <NavLink class="nav-link" href="/admin/roles">
+                <NavLink class="nav-link" href="/admin/roles" Match="NavLinkMatch.All">
                     <span class="bi bi-shield-lock-fill fs-6" aria-hidden="true"></span>&nbsp; مدیریت نقش‌ها
                 </NavLink>
             </div>

@@ -1,0 +1,102 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
+
+<div class="dropdown">
+    <!-- دکمه باز کردن منو -->
+    <a class="d-flex align-items-center text-decoration-none"
+       href="#"
+       id="userMenu"
+       role="button"
+       data-bs-toggle="dropdown"
+       aria-expanded="false">
+        <span class="rounded-circle bg-primary text-white d-inline-flex justify-content-center align-items-center me-2"
+              style="width:36px;height:36px;font-size:18px;font-weight:400;background-color:#5c6bc0 !important;">
+            @UserInitial
+        </span>
+        <span class="text-body fw-semibold me-2">@UserName</span>
+    </a>
+
+    <!-- منوی کشویی -->
+    <div class="dropdown-menu dropdown-menu-end p-3 shadow border-0 rounded-4"
+         aria-labelledby="userMenu"
+         style="min-width:320px; background-color: #e9eef6;">
+
+        <!-- اطلاعات کاربر -->
+        <div class="text-center mb-3">
+            <!-- ردیف اول: ایمیل -->
+            <div class="text-muted small mb-2">@UserEmail</div>
+
+            <!-- ردیف دوم: آیکون -->
+            <span class="rounded-circle bg-primary text-white d-inline-flex justify-content-center align-items-center mb-2"
+                  style="width:70px;height:70px;font-size:36px;font-weight:400;background-color:#5c6bc0 !important;">
+                @UserInitial
+            </span>
+
+            <!-- ردیف سوم: نام کاربری -->
+            <div class="fw-semibold text-body" style="font-size:22px;">
+                @UserName
+            </div>
+        </div>
+
+
+        @* <a href="/Identity/Account/Manage"
+           class="btn btn-outline-primary w-100 text-decoration-none mb-2">
+            مدیریت حساب کاربری
+        </a> *@
+
+        @* <hr class="dropdown-divider" /> *@
+
+        <!-- گزینه‌ها -->
+        <a href="/ChangePassword"
+           class="dropdown-item py-2 text-decoration-none text-end userMenuTop">
+            تغییر رمز عبور
+        </a>
+
+        <a href="/Identity/Account/Logout"
+           class="dropdown-item py-2 text-decoration-none text-end userMenuBottom">
+            خروج از حساب کاربری
+        </a>
+
+        @* <hr class="dropdown-divider" /> *@
+
+        <!-- لینک‌های پایینی -->
+        @* <div class="d-flex justify-content-between mt-3">
+            <a href="/privacy" class="link-secondary link-underline-opacity-0 link-underline-opacity-100-hover small">حریم خصوصی</a>
+            <a href="/About" class="link-secondary link-underline-opacity-0 link-underline-opacity-100-hover small">درباره سامانه</a>
+        </div> *@
+
+        <div class="d-flex justify-content-center mt-3">
+            <a href="/About"
+               class="link-secondary text-decoration-none small about-btn-hover">
+                درباره سامانه
+            </a>
+        </div>
+
+    </div>
+</div>
+
+
+@code {
+    private string? UserName;
+    private string? UserEmail;
+    private string UserInitial => string.IsNullOrEmpty(UserName) ? "?" : UserName.Substring(0, 1).ToUpper();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var principal = authState.User;
+
+        foreach (var claim in principal.Claims)
+        {
+            Console.WriteLine($"Claim Type: {claim.Type}, Claim Value: {claim.Value}");
+        }
+
+        UserName = principal.Identity?.Name ?? "کاربر";
+        UserEmail = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? "user@example.com";
+    }
+
+
+}

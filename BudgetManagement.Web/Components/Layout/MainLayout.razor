@@ -17,8 +17,8 @@
             @* <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a> *@
             <AuthorizeView>
                 <Authorized>
-                    <a>@context.User.Identity!.Name</a>
-                    <a href="/Identity/Account/Logout">خروج</a>
+                    @* <a href="#">@context.User.Identity!.Name</a> *@
+                    <UserMenu/>
                 </Authorized>
             </AuthorizeView>
         </div>
