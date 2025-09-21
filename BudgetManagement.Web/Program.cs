@@ -5,11 +5,14 @@ using BudgetManagement.Application.Validators;
 using BudgetManagement.Infrastructure.Identity;
 using BudgetManagement.Infrastructure.Persistence;
 using BudgetManagement.Infrastructure.Repositories;
+using BudgetManagement.Infrastructure.Services;
 using BudgetManagement.Infrastructure.Services.Excel;
 using BudgetManagement.Web.Common.Models;
 using BudgetManagement.Web.Components;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Drawing;
+using QuestPDF.Infrastructure;
 using System;
 
 
@@ -25,6 +28,10 @@ builder.Services.AddRazorPages();
 builder.Services.AddScoped<IBudgetImportUseCase, BudgetImportUseCase>();
 builder.Services.AddScoped<BudgetImportValidator>();
 builder.Services.AddScoped<IBudgetCalculationUseCase, BudgetCalculationUseCase>();
+builder.Services.AddScoped<IAuditLogger, AuditLogger>();
+builder.Services.AddScoped<IClientInfoProvider, ClientInfoProvider>();
+builder.Services.AddScoped<IExportService, ExportService>();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddAutoMapper(typeof(BudgetRecordProfile).Assembly);
 
@@ -76,6 +83,21 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.ExpireTimeSpan = TimeSpan.FromMinutes(15);
     options.SlidingExpiration = true;// تمدید خودکار اعتبار کوکی در صورت فعالیت کاربر
 });
+
+// رجیستر فونت فارسی برای QuestPDF
+/*var fontPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "fonts", "Vazir.ttf");
+if (File.Exists(fontPath))
+{
+    FontManager.RegisterFont(File.OpenRead(fontPath));
+}*/
+
+// 1) Select QuestPDF license
+QuestPDF.Settings.License = LicenseType.Community;
+// اگر سازمان درآمد > $1M دارد، باید Professional استفاده شود.
+
+var fontPath = Path.Combine(builder.Environment.WebRootPath, "fonts", "Vazir.ttf");
+if (File.Exists(fontPath))
+    FontManager.RegisterFont(File.OpenRead(fontPath));
 
 
 var app = builder.Build();

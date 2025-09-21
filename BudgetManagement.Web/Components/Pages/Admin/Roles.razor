@@ -3,9 +3,13 @@
 @attribute [Authorize(Roles = "Admin")]
 
 @using System.ComponentModel.DataAnnotations
+@using BudgetManagement.Application.Interfaces
 @using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Authorization
 @inject RoleManager<ApplicationRole> RoleManager
 @inject UserManager<ApplicationUser> UserManager
+@inject IAuditLogger AuditLogger
+@inject AuthenticationStateProvider AuthStateProvider
 
 <h3 class="mb-4">مدیریت نقش‌ها</h3>
 
@@ -101,16 +105,7 @@ else
     private DeleteConfirm deleteConfirm = new();
     private List<ApplicationRole>? roles;
     private ApplicationRole newRole = new();
-
-    // public class ApplicationRole : IdentityRole
-    // {
-    //     [Required(ErrorMessage = "نام نقش الزامی است")]
-    //     public override string Name { get; set; } = string.Empty;
-
-    //     [Required(ErrorMessage = "توضیحات نقش الزامی است")]
-    //     public string Description { get; set; } = string.Empty;
-    // }
-
+    private string? message;
 
     private class DeleteConfirm
     {
@@ -129,7 +124,12 @@ else
         roles = await RoleManager.Roles.ToListAsync();
     }
 
-    private string? message;
+    private async Task<(string userId, string userName)> GetCurrentUserAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = await UserManager.GetUserAsync(authState.User);
+        return (user?.Id ?? "", user?.UserName ?? "Unknown");
+    }
 
     private async Task CreateRole()
     {
@@ -146,7 +146,12 @@ else
             });
 
             if (result.Succeeded)
+            {
+                var (userId, userName) = await GetCurrentUserAsync();
+                await AuditLogger.LogAsync(userId, userName, "CreateRole", newRole.Name);
+
                 message = "نقش با موفقیت ایجاد شد.";
+            }
             else
                 message = "خطا در ایجاد نقش.";
 
@@ -174,7 +179,8 @@ else
         var role = await RoleManager.FindByIdAsync(deleteConfirm.RoleId);
         if (role != null)
         {
-            if (role.Name == "Admin")
+            var protectedRoles = new[] { "admin", "administrator" };
+            if (protectedRoles.Contains(role.Name.Trim(), StringComparer.OrdinalIgnoreCase))
             {
                 message = "نقش Admin قابل حذف نیست.";
                 CloseConfirm();
@@ -191,7 +197,18 @@ else
             }
 
             var result = await RoleManager.DeleteAsync(role);
-            message = result.Succeeded ? "نقش حذف شد." : "خطا در حذف نقش.";
+            if (result.Succeeded)
+            {
+                var (userId, userName) = await GetCurrentUserAsync();
+                await AuditLogger.LogAsync(userId, userName, "DeleteRole", role.Name);
+
+                message = "نقش حذف شد.";
+            }
+            else
+            {
+                message = "خطا در حذف نقش.";
+            }
+
             await LoadRoles();
             CloseConfirm();
         }

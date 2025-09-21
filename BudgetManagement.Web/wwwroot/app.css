@@ -6,6 +6,9 @@ html, body {
     direction: rtl;
 }
 
+.ltr {
+    direction: ltr;
+}
 
 a, .btn-link {
     color: #006bb7;
@@ -231,3 +234,26 @@ h1:focus {
         text-decoration: none; 
     }
 
+/* Overlay تمام‌صفحه با پس‌زمینه نیمه‌تاریک */
+.export-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000; /* بالاتر از dropdown و جدول */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.export-overlay-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* اسپینر بزرگ‌تر از حالت معمول */
+.export-spinner {
+    width: 4rem;
+    height: 4rem;
+    border-width: 0.45rem;
+}

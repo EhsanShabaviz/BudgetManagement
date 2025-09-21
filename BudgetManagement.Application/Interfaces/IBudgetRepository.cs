@@ -1,4 +1,5 @@
-﻿using BudgetManagement.Domain.Entities;
+﻿using BudgetManagement.Application.DTOs;
+using BudgetManagement.Domain.Entities;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,6 +20,11 @@ namespace BudgetManagement.Application.Interfaces
         Task UpdateBySubProjectCodeAsync(string subProjectCode, BudgetRecord record, CancellationToken cancellationToken = default);
         Task DeleteAsync(BudgetRecord record, CancellationToken cancellationToken = default);
         Task DeleteBySubProjectCodeAsync(string subProjectCode, CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<AuditLog>> GetAllAuditLogsAsync(CancellationToken cancellationToken = default);
+        Task<IEnumerable<AuditLogDto>> GetAllAuditLogsWithUserAsync(CancellationToken cancellationToken = default);
+        Task<List<string>> GetActionTypeAsync(CancellationToken cancellationToken = default);
+
 
         // عملیات گروهی بهینه‌شده
         Task<Dictionary<string, BudgetRecord>> GetBySubProjectCodesAsync(

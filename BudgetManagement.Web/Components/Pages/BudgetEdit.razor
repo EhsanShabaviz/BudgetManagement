@@ -1,15 +1,16 @@
 ﻿@page "/BudgetEdit"
 @rendermode InteractiveServer
+@attribute [Authorize(Policy = "User")]
 
+@using BudgetManagement.Common.Extensions
 @using BudgetManagement.Domain.Entities
 @using BudgetManagement.Application.Interfaces
 @using System.Globalization;
-@using BudgetManagement.Web.Extensions
-
-
 @inject IBudgetRepository BudgetRepository
+@inject IAuditLogger AuditLogger
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
 
-@attribute [Authorize(Policy = "User")]
 
 <h3>ویرایش اطلاعات</h3>
 
@@ -189,15 +190,22 @@ else if (results is not null)
                 // تبدیل تاریخ قرارداد
                 DateTime? contractDate = (r.ContractDate).TryParseShamsiDateToMiladi();
 
-                bool matchStart = !start.HasValue || (contractDate != null && contractDate.Value.Date >= start.Value.Date);
-                bool matchEnd = !end.HasValue || (contractDate != null && contractDate.Value.Date <= end.Value.Date);
+                bool matchStartDate = !start.HasValue || (contractDate != null && contractDate.Value.Date >= start.Value.Date);
+                bool matchEndDate = !end.HasValue || (contractDate != null && contractDate.Value.Date <= end.Value.Date);
 
 
-                return matchSubProjectCode && contractTitle && contractNumber && matchExecutiveDept && matchStart && matchEnd;
+                return matchSubProjectCode && contractTitle && contractNumber && matchExecutiveDept && matchStartDate && matchEndDate;
             })
             .ToList();
 
         isSearching = false;
+    }
+
+    private async Task<(string userId, string userName)> GetCurrentUserAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var currentUser = await UserManager.GetUserAsync(authState.User);
+        return (currentUser?.Id ?? "", currentUser?.UserName ?? "Unknown");
     }
 
     private async Task DeleteAsync(string subProjectCode)
@@ -209,5 +217,8 @@ else if (results is not null)
         {
             results.RemoveAll(r => r.SubProjectCode == subProjectCode);
         }
+
+        var (userId, userName) = await GetCurrentUserAsync();
+        await AuditLogger.LogAsync(userId, userName, "DeleteBudgetRecord", subProjectCode);
     }
 }

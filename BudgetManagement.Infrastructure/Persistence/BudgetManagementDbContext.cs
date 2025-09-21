@@ -1,6 +1,7 @@
 ﻿using BudgetManagement.Domain.Entities;
 using BudgetManagement.Infrastructure.Identity;
 using DocumentFormat.OpenXml.InkML;
+using DocumentFormat.OpenXml.Vml.Office;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ public class BudgetManagementDbContext : IdentityDbContext<ApplicationUser, Appl
     // DbSet ها — هر موجودیت یک جدول
     public DbSet<BudgetRecord> BudgetRecords { get; set; }
     public DbSet<Nature> Natures { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -97,6 +99,15 @@ public class BudgetManagementDbContext : IdentityDbContext<ApplicationUser, Appl
                 new Nature { Id = 17, Name = "نورپردازی" }
                 );
         });
+
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DateTime).HasColumnType("datetime2(0)");
+            entity.Property(e => e.UserId).HasMaxLength(450);
+            entity.Property(e => e.ActionType).HasMaxLength(100);
+        });
+
 
     }
 }

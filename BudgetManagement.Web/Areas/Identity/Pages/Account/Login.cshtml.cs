@@ -1,9 +1,10 @@
-using System.ComponentModel.DataAnnotations;
+using BudgetManagement.Application.Interfaces;
 using BudgetManagement.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.ComponentModel.DataAnnotations;
 
 namespace BudgetManagement.Web.Areas.Identity.Pages.Account
 {
@@ -12,11 +13,16 @@ namespace BudgetManagement.Web.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IAuditLogger _auditLogger;
 
-        public LoginModel(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager)
+        public LoginModel(
+            SignInManager<ApplicationUser> signInManager,
+            UserManager<ApplicationUser> userManager,
+            IAuditLogger auditLogger)
         {
             _signInManager = signInManager;
             _userManager = userManager;
+            _auditLogger = auditLogger;
         }
 
         [BindProperty]
@@ -54,8 +60,10 @@ namespace BudgetManagement.Web.Areas.Identity.Pages.Account
             var user = await _userManager.FindByNameAsync(Input.UserNameOrEmail)
                        ?? await _userManager.FindByEmailAsync(Input.UserNameOrEmail);
 
+
             if (user == null)
             {
+                await _auditLogger.LogAsync("", "Unknown", "LoginFailed", Input.UserNameOrEmail);
                 ModelState.AddModelError(string.Empty, "نام کاربری یا رمز عبور اشتباه است.");
                 return Page();
             }
@@ -68,14 +76,23 @@ namespace BudgetManagement.Web.Areas.Identity.Pages.Account
             );
 
             if (result.Succeeded)
-                return LocalRedirect(ReturnUrl);
+            {
+                await _auditLogger.LogAsync(user.Id, user.UserName!, "LoginSuccess");
+                //return LocalRedirect(ReturnUrl);
+                return Redirect("~/");
+
+            }
 
             if (result.IsLockedOut)
             {
-                ModelState.AddModelError(string.Empty, "حساب شما قفل شده است.");
+                await _auditLogger.LogAsync(user.Id, user.UserName!, "AccountLocked");
+                ModelState.AddModelError(string.Empty, "حساب کاربری شما قفل شده است.");
                 return Page();
             }
 
+
+            //پسورد اشتباه ولی کاربر وجود دارد
+            await _auditLogger.LogAsync(user.Id, user.UserName!, "LoginFailed");
             ModelState.AddModelError(string.Empty, "نام کاربری یا رمز عبور اشتباه است.");
             return Page();
         }

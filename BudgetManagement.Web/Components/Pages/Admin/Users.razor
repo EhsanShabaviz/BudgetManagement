@@ -1,15 +1,19 @@
 ﻿@page "/admin/users"
 @rendermode InteractiveServer
-
 @attribute [Authorize(Roles = "Admin")]
+
+@using BudgetManagement.Application.Interfaces
 @using BudgetManagement.Infrastructure.Identity
 @using Microsoft.EntityFrameworkCore
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager Nav
+@inject IAuditLogger AuditLogger
+@inject AuthenticationStateProvider AuthStateProvider
+
 
 <h3 class="mb-4">مدیریت کاربران</h3>
 
-@if(vm is not null)
+@if (vm is not null)
 {
     <div class="row g-3 mb-4">
         <div class="col-md-4">
@@ -83,7 +87,7 @@ else
         <div class="alert alert-info">@resultMessage</div>
     }
 
-    
+
     <table class="table table-striped">
         <thead>
             <tr>
@@ -199,10 +203,7 @@ else
 
     private async Task LoadUsers()
     {
-        // var users = UserManager.Users.ToList();
         var users = await UserManager.Users.ToListAsync();
-
-
         var userRoles = new Dictionary<string, IList<string>>();
         foreach (var u in users)
         {
@@ -249,8 +250,8 @@ else
             currentPage = page;
     }
 
-    private void CreateUser() => Nav.NavigateTo("/admin/users/upsert");
-    private void EditUser(string id) => Nav.NavigateTo($"/admin/users/upsert/{id}");
+    private void CreateUser() => Nav.NavigateTo("/admin/users/UpsertUser");
+    private void EditUser(string id) => Nav.NavigateTo($"/admin/users/UpsertUser/{id}");
 
     private void ConfirmDelete(string id)
     {
@@ -263,21 +264,54 @@ else
         deleteConfirm = new DeleteConfirm();
     }
 
+    private async Task<(string userId, string userName)> GetCurrentUserAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var currentUser = await UserManager.GetUserAsync(authState.User);
+        return (currentUser?.Id ?? "", currentUser?.UserName ?? "Unknown");
+    }
+
+
+
+    // لیست کاربران محافظت‌شده
+    private List<string> protectedUserNames = new List<string> { "admin", "administrator" };
+    private List<string> protectedEmails = new List<string> { "admin@", "administrator@" };
+    private List<string> adminRoles = new List<string> { "admin", "administrator" };
+
     private async Task ToggleUserStatus(string userId)
     {
-        var user = await UserManager.FindByIdAsync(userId);
-        if (user == null) return;
+        var targetUser = await UserManager.FindByIdAsync(userId);
+        if (targetUser == null) return;
 
-        if (user.LockoutEnd == null)
+        // جلوگیری از غیرفعال کردن ادمین اصلی
+        if (protectedUserNames.Contains(targetUser.UserName.Trim(), StringComparer.OrdinalIgnoreCase) ||
+            protectedEmails.Any(prefix => targetUser.Email.Trim().StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
         {
-            user.LockoutEnd = DateTimeOffset.MaxValue; // غیرفعال
+            resultMessage = "ادمین سیستم را نمی‌توانید غیرفعال کنید.";
+            return;
+        }
+
+        // جلوگیری از غیرفعال کردن خود کاربر توسط خودش//
+        var (currentUserId, currentUserName) = await GetCurrentUserAsync();
+        if (currentUserId == targetUser.Id)
+        {
+            resultMessage = "حساب کاربری خودتان را نمی‌توانید غیرفعال کنید.";
+            CloseConfirm();
+            return;
+        }
+
+        if (targetUser.LockoutEnd == null)
+        {
+            targetUser.LockoutEnd = DateTimeOffset.MaxValue; // غیرفعال
+            await AuditLogger.LogAsync(currentUserId, currentUserName, "DeactivateUser", targetUser.UserName);
         }
         else
         {
-            user.LockoutEnd = null; // فعال
+            targetUser.LockoutEnd = null; // فعال
+            await AuditLogger.LogAsync(currentUserId, currentUserName, "ActivateUser", targetUser.UserName);
         }
 
-        await UserManager.UpdateAsync(user);
+        await UserManager.UpdateAsync(targetUser);
         await LoadUsers();
     }
 
@@ -286,34 +320,76 @@ else
         if (string.IsNullOrWhiteSpace(deleteConfirm.UserId))
             return;
 
-        var user = await UserManager.FindByIdAsync(deleteConfirm.UserId);
-        if (user != null)
+        var targetUser = await UserManager.FindByIdAsync(deleteConfirm.UserId);
+        if (targetUser != null)
         {
+
             // جلوگیری از حذف ادمین اصلی
-            if (user.UserName == "admin" || user.Email == "admin@local")
+            if (protectedUserNames.Contains(targetUser.UserName.Trim(), StringComparer.OrdinalIgnoreCase) ||
+                protectedEmails.Any(prefix => targetUser.Email.Trim().StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
             {
                 resultMessage = "کاربر ادمین اصلی قابل حذف نیست.";
                 CloseConfirm();
                 return;
             }
 
-            // جلوگیری از حذف آخرین ادمین
-            var isAdmin = await UserManager.IsInRoleAsync(user, "Admin");
+            // جلوگیری از حذف آخرین ادمین//
+            // بررسی اینکه آیا کاربر عضو یکی از نقش‌های هدف هست
+            var userRoles = await UserManager.GetRolesAsync(targetUser);
+            var isAdmin = userRoles.Any(role =>
+                adminRoles.Contains(role.Trim(), StringComparer.OrdinalIgnoreCase));
+
             if (isAdmin)
             {
-                var admins = await UserManager.GetUsersInRoleAsync("Admin");
-                if (admins.Count == 1)
+                // جمع‌آوری همه کاربران عضو نقش‌های ادمینی
+                var allAdmins = new List<ApplicationUser>();
+                foreach (var role in adminRoles)
                 {
-                    resultMessage = "نمی‌توانید آخرین ادمین سیستم را حذف کنید.";
+                    var usersInRole = await UserManager.GetUsersInRoleAsync(role);
+                    allAdmins.AddRange(usersInRole);
+                }
+
+                // حذف کاربران تکراری (در صورت عضویت در چند نقش)
+                var distinctAdmins = allAdmins
+                    .GroupBy(u => u.Id)
+                    .Select(g => g.First())
+                    .ToList();
+
+                if (distinctAdmins.Count == 1)
+                {
+                    resultMessage = "آخرین ادمین سیستم را نمی‌توانید حذف کنید.";
                     CloseConfirm();
                     return;
                 }
             }
 
-            var result = await UserManager.DeleteAsync(user);
-            resultMessage = result.Succeeded ? "کاربر حذف شد." : "خطا در حذف کاربر.";
-        }
+            // جلوگیری از حذف خود کاربر توسط خودش//
+            var (currentUserId, currentUserName) = await GetCurrentUserAsync();
+            if (currentUserId == targetUser.Id)
+            {
+                resultMessage = "حساب کاربری خودتان را نمی‌توانید حذف کنید.";
+                CloseConfirm();
+                return;
+            }
 
+            var result = await UserManager.DeleteAsync(targetUser);
+            if (result.Succeeded)
+            {
+                await AuditLogger.LogAsync(currentUserId, currentUserName, "DeleteUser", targetUser.UserName);
+                resultMessage = "کاربر حذف شد.";
+                resultMessage = $"کاربر {targetUser.UserName} حذف شد.";
+                CloseConfirm();
+                return;
+            }
+            else
+            {
+                resultMessage = "خطا در حذف کاربر.";
+                CloseConfirm();
+                return;
+            }
+
+
+        }
         await LoadUsers();
         CloseConfirm();
     }

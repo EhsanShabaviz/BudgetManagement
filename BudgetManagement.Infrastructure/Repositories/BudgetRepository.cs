@@ -1,4 +1,5 @@
-﻿using BudgetManagement.Application.Interfaces;
+﻿using BudgetManagement.Application.DTOs;
+using BudgetManagement.Application.Interfaces;
 using BudgetManagement.Domain.Entities;
 using BudgetManagement.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -138,5 +139,43 @@ namespace BudgetManagement.Infrastructure.Repositories
             await _db.SaveChangesAsync(cancellationToken);
         }
 
+
+        public async Task<IEnumerable<AuditLog>> GetAllAuditLogsAsync(CancellationToken cancellationToken = default)
+        {
+            return await _db.AuditLogs
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<AuditLogDto>> GetAllAuditLogsWithUserAsync(CancellationToken cancellationToken = default)
+        {
+            return await _db.AuditLogs
+                .Join(_db.Users,
+                      log => log.UserId,
+                      user => user.Id,
+                      (log, user) => new AuditLogDto
+                      {
+                          Id = log.Id,
+                          UserId = log.UserId,
+                          UserName = user.UserName ?? "Unknown", // 👈 گرفتن نام کاربری
+                          ActionType = log.ActionType,
+                          Description = log.Description,
+                          DateTime = log.DateTime,
+                          IPAddress = log.IPAddress,
+                          BrowserInfo = log.BrowserInfo
+                      })
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
+
+
+        public async Task<List<string>> GetActionTypeAsync(CancellationToken cancellationToken = default)
+        {
+            return await _db.AuditLogs
+                .Select(r => r.ActionType)
+                .Distinct()
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
     }
 }

@@ -1,17 +1,19 @@
 ﻿@page "/BudgetEditForm/{SubProjectCode}"
 @rendermode InteractiveServer
+@attribute [Authorize(Policy = "User")]
 
 @using AutoMapper
 @using BudgetManagement.Application.DTOs
 @using BudgetManagement.Application.Interfaces
 @using BudgetManagement.Domain.Entities
 @using Microsoft.AspNetCore.Components.Forms
-
+@using Microsoft.AspNetCore.Identity
 @inject IBudgetRepository BudgetRepository
 @inject IMapper Mapper
 @inject NavigationManager Nav
-
-@attribute [Authorize(Policy = "User")]
+@inject IAuditLogger AuditLogger
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
 
 <h4 class="mb-3">ویرایش رکورد بودجه</h4>
 
@@ -211,7 +213,6 @@ else if (model is not null)
 }
 
 
-
 @code {
     [Parameter]
     public string? SubProjectCode { get; set; }
@@ -255,10 +256,18 @@ else if (model is not null)
         }
     }
 
+    private async Task<(string userId, string userName)> GetCurrentUserAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var currentUser = await UserManager.GetUserAsync(authState.User);
+        return (currentUser?.Id ?? "", currentUser?.UserName ?? "Unknown");
+    }
+
     private async Task HandleSaveAsync()
     {
         isSaving = true;
         message = null;
+        var (userId, userName) = await GetCurrentUserAsync();
 
         try
         {
@@ -268,11 +277,12 @@ else if (model is not null)
             Mapper.Map(model, entity);
 
             await BudgetRepository.SaveChangesAsync();
-
+            await AuditLogger.LogAsync(userId, userName, "UpdateBudgetRecord", entity.SubProjectCode);
             message = "اطلاعات با موفقیت ذخیره شد ✅";
         }
         catch (Exception ex)
         {
+            await AuditLogger.LogAsync(userId, userName, "SaveBudgetRecordFailed", $"{SubProjectCode} | {ex.Message}");
             message = $"خطا در ذخیره‌سازی: {ex.Message}";
         }
         finally

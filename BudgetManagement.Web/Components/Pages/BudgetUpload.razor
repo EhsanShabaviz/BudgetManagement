@@ -1,15 +1,18 @@
 ﻿@page "/BudgetUpload"
 @rendermode InteractiveServer
+@attribute [Authorize(Policy = "User")]
 
 @using BudgetManagement.Domain.Entities
 @using BudgetManagement.Application.DTOs.Budget
 @using BudgetManagement.Application.Interfaces
 @using Microsoft.AspNetCore.Components.Forms
-
+@using Microsoft.AspNetCore.Identity
 @inject IBudgetImportUseCase ImportUseCase
 @inject IBudgetCalculationUseCase CalculationUseCase
+@inject IAuditLogger AuditLogger
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
 
-@attribute [Authorize(Policy = "User")]
 
 <h3>بارگذاری اطلاعات</h3>
 <div class="card shadow-sm border-0 mb-3" style="direction: rtl; text-align: right;">
@@ -161,7 +164,6 @@
     private bool CalculationDone;
     private bool IsPreviewDisabled; // کنترل غیرفعال بودن دکمه پیش‌نمایش
 
-
     private bool ShowSuccessAlert;
     private string? SuccessMessage;
     private string? Status;
@@ -171,6 +173,13 @@
 
     private bool CanCalculate => Records?.Any() == true;
     private bool CanImport => CalculationDone && (PreviewResult?.TotalValid ?? 0) > 0;
+
+    private async Task<(string userId, string userName)> GetCurrentUserAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var currentUser = await UserManager.GetUserAsync(authState.User);
+        return (currentUser?.Id ?? "", currentUser?.UserName ?? "Unknown");
+    }
 
     private void OnInputFileChange(InputFileChangeEventArgs e)
     {
@@ -276,6 +285,8 @@
     {
         if (_file == null || IsImporting) return;
 
+        var (userId, userName) = await GetCurrentUserAsync();
+
         try
         {
             IsImporting = true;
@@ -316,6 +327,9 @@
 
             SuccessMessage = $"بارگذاری با موفقیت انجام شد. نتیجه: درج {result.InsertedCount} | به‌روزرسانی {result.UpdatedCount}";
             ShowSuccessAlert = true;
+           
+            await AuditLogger.LogAsync(userId, userName, "UploadBudgetRecords",
+                $"Inserted: {result.InsertedCount}, Updated: {result.UpdatedCount}");
 
             // ✅ پاک‌سازی صفحه و حافظه
             Records = null;
@@ -332,6 +346,7 @@
         }
         catch (Exception ex)
         {
+            await AuditLogger.LogAsync(userId, userName, "UploadBudgetRecordsFailed", ex.Message);
             Status = $"خطا در بارگذاری: {ex.Message}";
         }
         finally

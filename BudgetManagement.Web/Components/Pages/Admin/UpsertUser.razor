@@ -1,14 +1,16 @@
-﻿@page "/admin/users/upsert/{Id?}"
+﻿@page "/admin/users/UpsertUser/{Id?}"
 @rendermode InteractiveServer
 
 @attribute [Authorize(Roles = "Admin")]
 @using BudgetManagement.Infrastructure.Identity
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.EntityFrameworkCore
+@using BudgetManagement.Application.Interfaces
 @inject UserManager<ApplicationUser> UserManager
 @inject RoleManager<ApplicationRole> RoleManager
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthStateProvider
+@inject IAuditLogger AuditLogger
 
 <h3>@(isNew ? "ایجاد کاربر جدید" : "ویرایش کاربر")</h3>
 
@@ -133,6 +135,13 @@ else
     private bool isSaving = false;
     private bool resetPasswordConfirm = false;
 
+    private async Task<(string userId, string userName)> GetCurrentUserAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var currentUser = await UserManager.GetUserAsync(authState.User);
+        return (currentUser?.Id ?? "", currentUser?.UserName ?? "Unknown");
+    }
+
     protected override async Task OnInitializedAsync()
     {
         allRoles = RoleManager.Roles.Select(r => r.Name!).ToList();
@@ -171,35 +180,64 @@ else
         isSaving = true;
         message = null;
 
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var currentUser = authState.User;
+        // لیست نقش‌های ادمینی
+        var adminRoles = new[] { "admin", "administrator" };
 
-        // جلوگیری از حذف نقش Admin از خود کاربر
-        if (!isNew && model!.Id == UserManager.GetUserId(currentUser))
+        // جلوگیری از حذف نقش‌های ادمین از خود کاربر
+        if (!isNew && model!.Id == UserManager.GetUserId((await AuthStateProvider.GetAuthenticationStateAsync()).User))
         {
-            var stillAdmin = model.SelectedRoles.Any(r => r.Key == "Admin" && r.Value);
+            var stillAdmin = adminRoles.Any(role =>
+                model.SelectedRoles.Any(r => r.Key.Equals(role, StringComparison.OrdinalIgnoreCase) && r.Value));
+
             if (!stillAdmin)
             {
-                message = "شما نمی‌توانید نقش Admin را از خودتان حذف کنید.";
+                message = "شما نمی‌توانید نقش ادمین را از خودتان حذف کنید.";
                 isSaving = false;
                 return;
             }
         }
 
-        // جلوگیری از حذف آخرین ادمین
-        var admins = await UserManager.GetUsersInRoleAsync("Admin");
+        // جلوگیری از حذف آخرین ادمین //old version
+        /* var admins = await UserManager.GetUsersInRoleAsync("Admin");
         if (!isNew && admins.Count == 1 && admins.First().Id == model!.Id && !model.SelectedRoles["Admin"])
+        {
+            message = "نمی‌توانید آخرین ادمین سیستم را حذف کنید.";
+            isSaving = false;
+            return;
+            }*/
+
+        // جلوگیری از حذف آخرین ادمین//new Version
+        var allAdmins = new List<ApplicationUser>();
+        foreach (var role in adminRoles)
+        {
+            var usersInRole = await UserManager.GetUsersInRoleAsync(role);
+            allAdmins.AddRange(usersInRole);
+        }
+
+        // حذف کاربران تکراری (در صورت عضویت در چند نقش)
+        var distinctAdmins = allAdmins
+            .GroupBy(u => u.Id)
+            .Select(g => g.First())
+            .ToList();
+
+        // بررسی اینکه آیا کاربر فعلی آخرین ادمین هست و نقش ادمینی ازش حذف شده
+        var isTargetAdmin = adminRoles.Any(role =>
+            model.SelectedRoles.TryGetValue(role, out var isSelected) &&
+            !isSelected);
+
+        if (!isNew && distinctAdmins.Count == 1 && distinctAdmins.First().Id == model.Id && isTargetAdmin)
         {
             message = "نمی‌توانید آخرین ادمین سیستم را حذف کنید.";
             isSaving = false;
             return;
         }
 
+
         IdentityResult result;
 
         if (isNew)
         {
-            // 🔹 چک تکراری بودن در ایجاد
+            // چک تکراری بودن در ایجاد
             if (await UserManager.Users.AnyAsync(u => u.FullName == model!.FullName))
             {
                 message = "نام و نام خانوادگی تکراری است.";
@@ -243,6 +281,8 @@ else
             if (result.Succeeded)
             {
                 await UserManager.AddToRolesAsync(newUser, model.SelectedRoles.Where(r => r.Value).Select(r => r.Key));
+                var (adminId, adminName) = await GetCurrentUserAsync();
+                await AuditLogger.LogAsync(adminId, adminName, "CreateUser", newUser.UserName);
                 message = "کاربر با موفقیت ایجاد شد.";
             }
         }
@@ -251,7 +291,7 @@ else
             var user = await UserManager.FindByIdAsync(model!.Id!);
             if (user == null) return;
 
-            // 🔹 چک تکراری بودن در ویرایش (به جز خود کاربر)
+            // چک تکراری بودن در ویرایش (به جز خود کاربر)
             if (await UserManager.Users.AnyAsync(u => u.FullName == model.FullName && u.Id != user.Id))
             {
                 message = "نام و نام خانوادگی تکراری است.";
@@ -296,6 +336,8 @@ else
                 if (rolesToRemove.Any())
                     await UserManager.RemoveFromRolesAsync(user, rolesToRemove);
 
+                var (adminId, adminName) = await GetCurrentUserAsync();
+                await AuditLogger.LogAsync(adminId, adminName, "UpdateUser", user.UserName);
                 message = "کاربر با موفقیت ویرایش شد.";
             }
         }
@@ -386,6 +428,8 @@ else
 
         if (result.Succeeded)
         {
+            var (adminId, adminName) = await GetCurrentUserAsync();
+            await AuditLogger.LogAsync(adminId, adminName, "ResetPassword", user.UserName);
             message = $"رمز عبور جدید: {tempPassword} (لطفاً به کاربر اطلاع دهید)";
         }
         else
