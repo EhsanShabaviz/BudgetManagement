@@ -1,0 +1,183 @@
+﻿@using System.Globalization
+@inject IJSRuntime JS
+
+<div class="dual-range-slider">
+    <label class="form-label">@Label</label>
+
+    <div class="inputs d-flex flex-column gap-2 mb-3">
+        <div class="d-flex align-items-center justify-content-between">
+            <span class="ms-1">از</span>
+            <input id="@StartInputId"
+                   class="form-control text-center fw-bold"
+                   value="@DisplayStart"
+                   @oninput="OnStartInputChanged" />
+            <span class="me-1">ریال</span>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between">
+            <span class="ms-1">تا</span>
+            <input id="@EndInputId"
+                   class="form-control text-center fw-bold"
+                   value="@DisplayEnd"
+                   @oninput="OnEndInputChanged" />
+            <span class="me-1">ریال</span>
+        </div>
+    </div>
+
+    <div class="slider-container position-relative">
+        <div class="track"></div>
+
+        <!-- نوار بین حد پایین (Start) و حد بالا (End) -->
+        <div class="range" style="@RangeStyle"></div>
+
+        <!-- دسته راست = Start (حد پایین) -->
+        <input type="range" class="thumb @(IsOverlapped ? "overlapped" : "")" id="@StartRangeId"
+               min="0" max="@Max" step="1"
+               value="@(Max - (StartValue ?? Min))"
+               style="z-index: @(LastActiveThumb == "start" ? "4" : "3");"
+               @oninput="OnRangeStartChanged" />
+
+        <!-- دسته چپ = End (حد بالا) -->
+        <input type="range" class="thumb @(IsOverlapped ? "overlapped" : "")" id="@EndRangeId"
+               min="0" max="@Max" step="1"
+               value="@(Max - (EndValue ?? Max))"
+               style="z-index: @(LastActiveThumb == "end" ? "4" : "3");"
+               @oninput="OnRangeEndChanged" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "محدوده قیمت";
+    [Parameter] public decimal Min { get; set; } = 0m;
+    [Parameter] public decimal Max { get; set; } = 90000000000m;
+
+    // دسته راست = Start (حد پایین)
+    [Parameter] public decimal? StartValue { get; set; } = 0m;
+    [Parameter] public EventCallback<decimal?> StartValueChanged { get; set; }
+
+    // دسته چپ = End (حد بالا)
+    [Parameter] public decimal? EndValue { get; set; } = 90000000000m;
+    [Parameter] public EventCallback<decimal?> EndValueChanged { get; set; }
+
+
+    private string StartInputId = $"start_{Guid.NewGuid():N}";
+    private string EndInputId = $"end_{Guid.NewGuid():N}";
+    private string StartRangeId = $"start_range_{Guid.NewGuid():N}";
+    private string EndRangeId = $"end_range_{Guid.NewGuid():N}";
+
+    private string LastActiveThumb = "end";
+
+    private bool IsOverlapped => (StartValue ?? Min) == (EndValue ?? Max);
+
+    private string DisplayStart => StartValue.HasValue ? FormatNumber(StartValue.Value) : "";
+    private string DisplayEnd => EndValue.HasValue ? FormatNumber(EndValue.Value) : "";
+
+    // هایلایت بین Start (راست) و End (چپ) — container را LTR نگه می‌داریم، اما موقعیت‌ها را برای RTL معکوس می‌کنیم
+    private string RangeStyle
+    {
+        get
+        {
+            var lower = Clamp(StartValue ?? Min, Min, Max);
+            var upper = Clamp(EndValue ?? Max, Min, Max);
+
+            // تضمین ترتیب صحیح: lower ≤ upper
+            if (lower > upper) lower = upper;
+
+            var range = Max - Min;
+            var pLeft = (double)((Max - upper) / range * 100m);    // موقعیت چپ (معکوس برای RTL، شروع از موقعیت upper)
+            var pWidth = (double)((upper - lower) / range * 100m);    // عرض بین lower و upper
+
+            return $"left:{pLeft}%; width:{pWidth}%;";
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("DualRangeSlider.initInputBlocking", StartInputId, EndInputId);
+        }
+    }
+
+    // ورودی "از" — حد پایین (Start)
+    private async Task OnStartInputChanged(ChangeEventArgs e)
+    {
+        var raw = NormalizeDigits(e.Value?.ToString() ?? "");
+        if (decimal.TryParse(raw, out var val))
+        {
+            // Start (حد پایین) باید ≤ End
+            var safe = Clamp(val, Min, EndValue ?? Max);
+            StartValue = safe;
+            await StartValueChanged.InvokeAsync(safe);
+            await JS.InvokeVoidAsync("DualRangeSlider.setValueWithCaret", StartInputId, DisplayStart);
+            LastActiveThumb = "start";
+            StateHasChanged();
+        }
+    }
+
+    // ورودی "تا" — حد بالا (End)
+    private async Task OnEndInputChanged(ChangeEventArgs e)
+    {
+        var raw = NormalizeDigits(e.Value?.ToString() ?? "");
+        if (decimal.TryParse(raw, out var val))
+        {
+            // End (حد بالا) باید ≥ Start
+            var safe = Clamp(val, StartValue ?? Min, Max);
+            EndValue = safe;
+            await EndValueChanged.InvokeAsync(safe);
+            await JS.InvokeVoidAsync("DualRangeSlider.setValueWithCaret", EndInputId, DisplayEnd);
+            LastActiveThumb = "end";
+            StateHasChanged();
+        }
+    }
+
+    // دسته راست = Start (حد پایین)
+    private async Task OnRangeStartChanged(ChangeEventArgs e)
+    {
+        if (decimal.TryParse(e.Value?.ToString(), out var val))
+        {
+            var actual = Max - val;
+            var safe = Clamp(actual, Min, EndValue ?? Max);
+            StartValue = safe;
+            await StartValueChanged.InvokeAsync(safe);
+            LastActiveThumb = "start";
+            StateHasChanged();
+            await JS.InvokeVoidAsync("DualRangeSlider.setRangeValue", StartRangeId, Max - StartValue);
+        }
+    }
+
+    // دسته چپ = End (حد بالا)
+    private async Task OnRangeEndChanged(ChangeEventArgs e)
+    {
+        if (decimal.TryParse(e.Value?.ToString(), out var val))
+        {
+            var actual = Max - val;
+            var safe = Clamp(actual, StartValue ?? Min, Max);
+            EndValue = safe;
+            await EndValueChanged.InvokeAsync(safe);
+            LastActiveThumb = "end";
+            StateHasChanged();
+            await JS.InvokeVoidAsync("DualRangeSlider.setRangeValue", EndRangeId, Max - EndValue);
+        }
+    }
+
+    private string FormatNumber(decimal num) => num.ToString("N0", CultureInfo.InvariantCulture);
+
+    private string NormalizeDigits(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return "";
+        return input
+            .Replace(",", "")
+            .Replace("٬", "")
+            .Select(ch =>
+            {
+                if (ch >= 0x06F0 && ch <= 0x06F9) return (char)('0' + (ch - 0x06F0)); // Persian
+                if (ch >= 0x0660 && ch <= 0x0669) return (char)('0' + (ch - 0x0660)); // Arabic
+                return ch;
+            })
+            .Aggregate("", (s, c) => s + c);
+    }
+
+    private static decimal Clamp(decimal value, decimal min, decimal max)
+        => value < min ? min : (value > max ? max : value);
+}

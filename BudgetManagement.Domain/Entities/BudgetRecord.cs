@@ -58,23 +58,23 @@ public class BudgetRecord
     [Display(Order = 11)]
     public decimal? TotalContractAmount { get; set; }
 
-    [DisplayName("مبلغ اولیه")]
+    [DisplayName("مبلغ اولیه قرارداد")]
     [Display(Order = 12)]
     public decimal? InitialAmount { get; set; }
 
-    /*[DisplayName("تامین اعتبار نقدی سال جاری")]
+    /*[DisplayName("تأمین اعتبار نقدی سال جاری")]
     [Display(Order = 13)]
     public decimal? CurrentYearCashCredit { get; set; }
 
-    [DisplayName("تامین اعتبار غیرنقدی سال جاری")]
+    [DisplayName("تأمین اعتبار غیرنقدی سال جاری")]
     [Display(Order = 14)]
     public decimal? CurrentYearNonCashCredit { get; set; }*/
 
-    [DisplayName("مبلغ کل تامین اعتبار سال جاری")]
+    [DisplayName("مبلغ کل تأمین اعتبار سال جاری")]
     [Display(Order = 15)]
     public decimal? CurrentYearTotalCredit { get; set; }
 
-    [DisplayName("کل مبلغ تامین از ابتدای پیمان")]
+    [DisplayName("کل مبلغ تأمین از ابتدای پیمان")]
     [Display(Order = 16)]
     public decimal? TotalCreditFromStart { get; set; }
 
@@ -143,7 +143,7 @@ public class BudgetRecord
     [Display(Order = 32)]
     public decimal? CreditDeficit { get; set; }*/
 
-    [DisplayName("کسری اعتبار تامین")]
+    [DisplayName("کسری اعتبار تأمین")]
     [Display(Order = 33)]
     public decimal? CreditDeficitSupply { get; set; }
 

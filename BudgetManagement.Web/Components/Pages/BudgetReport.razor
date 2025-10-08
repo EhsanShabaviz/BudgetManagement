@@ -1,0 +1,483 @@
+﻿@page "/BudgetReport"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "UserManager")]
+
+@using BudgetManagement.Application.DTOs.Budget
+@using BudgetManagement.Application.Interfaces
+@using BudgetManagement.Common.Extensions
+@using BudgetManagement.Web.Common.Models
+@using BudgetManagement.Web.Common.Services
+@inject IBudgetRepository BudgetRepository
+@inject IExportService ExportService
+@inject IBudgetReportService BudgetReportService
+@inject IJSRuntime JS
+
+<h3>گزارش اعتبارات</h3>
+
+<div class="card shadow-sm border-0 mb-3" style="direction: rtl; text-align: right;">
+    <div class="card-body bg-light rounded-3">
+        <p class="mb-0" style="font-size: 1.1rem;">
+            📌 از فیلترهای زیر برای جستجو استفاده کنید.
+        </p>
+    </div>
+</div>
+
+<EditForm Model="@filters" OnValidSubmit="@SearchAsync" FormName="BudgetReportForm">
+    <div class="row g-3">
+        <!-- 🧾 فیلدهای متنی -->
+        <div class="col-12 col-md-2">
+            <label class="form-label">کد زیرپروژه</label>
+            <InputText @bind-Value="filters.SubProjectCode" class="form-control" />
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label">عنوان قرارداد</label>
+            <InputText @bind-Value="filters.ContractTitle" class="form-control" />
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label">شماره قرارداد</label>
+            <InputText @bind-Value="filters.ContractNumber" class="form-control" />
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label">پیمانکار</label>
+            <InputText @bind-Value="filters.Contractor" class="form-control" />
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label">کارگزار</label>
+            <InputText @bind-Value="filters.Agent" class="form-control" />
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label">شماره تأمین</label>
+            <InputText @bind-Value="filters.CreditNumber" class="form-control" />
+        </div>
+
+        <div class="col-12 col-md-3">
+            <label class="form-label">وضعیت قرارداد</label>
+            <div class="input-group">
+                <InputSelect @bind-Value="filters.ContractStatus" class="form-select">
+                    <option value="">-- انتخاب کنید --</option>
+                    @foreach (var dept in ContractStatusOptions)
+                    {
+                        <option value="@dept">@dept</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label">معاونت اجرایی</label>
+            @* <InputText @bind-Value="model.ExecutiveDept" class="form-control" /> *@
+            <div class="input-group">
+                <InputSelect @bind-Value="filters.ExecutiveDept" class="form-select">
+                    <option value="">-- انتخاب کنید --</option>
+                    @foreach (var dept in ExecutiveDeptOptions)
+                    {
+                        <option value="@dept">@dept</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label">نحوه ارجاع کار</label>
+            <div class="input-group">
+                <InputSelect @bind-Value="filters.WorkReferralMethod" class="form-select">
+                    <option value="">-- انتخاب کنید --</option>
+                    @foreach (var dept in WorkReferralMethodOptions)
+                    {
+                        <option value="@dept">@dept</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label">ماهیت</label>
+            <div class="input-group">
+                <InputSelect @bind-Value="filters.Nature" class="form-select">
+                    <option value="">-- انتخاب کنید --</option>
+                    @foreach (var dept in NatureOptions)
+                    {
+                        <option value="@dept">@dept</option>
+                    }
+                </InputSelect>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 📅 تاریخ‌ها -->
+    <div class="row g-3 mt-2">
+        <div class="col-12 col-md-2">
+            <label class="form-label">از تاریخ قرارداد</label>
+            <CustomizeInputPersianDatePicker @bind-Value="filters.ContractDateFrom" />
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label">تا تاریخ قرارداد</label>
+            <CustomizeInputPersianDatePicker @bind-Value="filters.ContractDateTo" />
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label">تاریخ شروع</label>
+            <CustomizeInputPersianDatePicker @bind-Value="filters.StartDate" />
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label">تاریخ خاتمه</label>
+            <CustomizeInputPersianDatePicker @bind-Value="filters.EndDate" />
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label">تاریخ تمدید یافته</label>
+            <CustomizeInputPersianDatePicker @bind-Value="filters.ExtendedEndDate" />
+        </div>
+    </div>
+
+    <!-- 💰 فیلدهای مبلغی (Min/Max) -->
+    <div class="row g-3 mt-2">
+        <div class="col-12 col-md-2">
+            <DualRangeSlider Label="مبلغ اولیه قرارداد"
+                             Min="0"
+                             Max="2000000000"
+                             StartValue="@filters.InitialAmountMin"
+                             EndValue="@filters.InitialAmountMax"
+                             StartValueChanged="@(val => filters.InitialAmountMin = val)"
+                             EndValueChanged="@(val => filters.InitialAmountMax = val)" />
+        </div>
+
+        <div class="col-12 col-md-2">
+            <DualRangeSlider Label="مبلغ کل قرارداد"
+                             Min="0"
+                             Max="2000000000"
+                             StartValue="@filters.TotalContractAmountMin"
+                             EndValue="@filters.TotalContractAmountMax"
+                             StartValueChanged="@(val => filters.TotalContractAmountMin = val)"
+                             EndValueChanged="@(val => filters.TotalContractAmountMax = val)" />
+        </div>
+
+        <div class="col-12 col-md-2">
+            <DualRangeSlider Label="مبلغ کل تأمین اعتبار سال جاری"
+                             Min="0"
+                             Max="2000000000"
+                             StartValue="@filters.CurrentYearTotalCreditMin"
+                             EndValue="@filters.CurrentYearTotalCreditMax"
+                             StartValueChanged="@(val => filters.CurrentYearTotalCreditMin = val)"
+                             EndValueChanged="@(val => filters.CurrentYearTotalCreditMax = val)" />
+        </div>
+
+        <div class="col-12 col-md-2">
+            <DualRangeSlider Label="کل مبلغ تأمین از ابتدای پیمان"
+                             Min="0"
+                             Max="2000000000"
+                             StartValue="@filters.TotalCreditFromStartMin"
+                             EndValue="@filters.TotalCreditFromStartMax"
+                             StartValueChanged="@(val => filters.TotalCreditFromStartMin = val)"
+                             EndValueChanged="@(val => filters.TotalCreditFromStartMax = val)" />
+        </div>
+
+        <div class="col-12 col-md-2">
+            <DualRangeSlider Label="مبلغ کل صورت وضعیت‌ها"
+                             Min="0"
+                             Max="2000000000"
+                             StartValue="@filters.TotalInvoicesAmountMin"
+                             EndValue="@filters.TotalInvoicesAmountMax"
+                             StartValueChanged="@(val => filters.TotalInvoicesAmountMin = val)"
+                             EndValueChanged="@(val => filters.TotalInvoicesAmountMax = val)" />
+        </div>
+
+        <div class="col-12 col-md-2">
+            <DualRangeSlider Label="مبلغ کل کارکرد"
+                             Min="0"
+                             Max="2000000000"
+                             StartValue="@filters.TotalWorkProgressMin"
+                             EndValue="@filters.TotalWorkProgressMax"
+                             StartValueChanged="@(val => filters.TotalWorkProgressMin = val)"
+                             EndValueChanged="@(val => filters.TotalWorkProgressMax = val)" />
+        </div>
+
+        <div class="col-12 col-md-2">
+            <DualRangeSlider Label="مبلغ صورت وضعیت‌های سال جاری"
+                             Min="0"
+                             Max="2000000000"
+                             StartValue="@filters.CurrentYearInvoicesAmountMin"
+                             EndValue="@filters.CurrentYearInvoicesAmountMax"
+                             StartValueChanged="@(val => filters.CurrentYearInvoicesAmountMin = val)"
+                             EndValueChanged="@(val => filters.CurrentYearInvoicesAmountMax = val)" />
+        </div>
+
+        <div class="col-12 col-md-2">
+            <DualRangeSlider Label="مبلغ تعدیل"
+                             Min="0"
+                             Max="2000000000"
+                             StartValue="@filters.AdjustmentAmountMin"
+                             EndValue="@filters.AdjustmentAmountMax"
+                             StartValueChanged="@(val => filters.AdjustmentAmountMin = val)"
+                             EndValueChanged="@(val => filters.AdjustmentAmountMax = val)" />
+        </div>
+
+        <div class="col-12 col-md-2">
+            <DualRangeSlider Label="حداکثر اعتبار مورد نیاز"
+                             Min="0"
+                             Max="2000000000"
+                             StartValue="@filters.MaxRequiredCreditMin"
+                             EndValue="@filters.MaxRequiredCreditMax"
+                             StartValueChanged="@(val => filters.MaxRequiredCreditMin = val)"
+                             EndValueChanged="@(val => filters.MaxRequiredCreditMax = val)" />
+        </div>
+
+        <div class="col-12 col-md-2">
+            <DualRangeSlider Label="کسری اعتبار تأمین"
+                             Min="0"
+                             Max="2000000000"
+                             StartValue="@filters.CreditDeficitSupplyMin"
+                             EndValue="@filters.CreditDeficitSupplyMax"
+                             StartValueChanged="@(val => filters.CreditDeficitSupplyMin = val)"
+                             EndValueChanged="@(val => filters.CreditDeficitSupplyMax = val)" />
+        </div>
+
+        <div class="col-12 col-md-2">
+            <DualRangeSlider Label="کسری اعتبار تعهد"
+                             Min="0"
+                             Max="2000000000"
+                             StartValue="@filters.CreditDeficitCommitmentMin"
+                             EndValue="@filters.CreditDeficitCommitmentMax"
+                             StartValueChanged="@(val => filters.CreditDeficitCommitmentMin = val)"
+                             EndValueChanged="@(val => filters.CreditDeficitCommitmentMax = val)" />
+        </div>
+
+    </div>
+
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">🔍 جستجو</button>
+    </div>
+</EditForm>
+
+@if (isSearching)
+{
+    <div class="alert alert-info mt-3">در حال جستجو...</div>
+}
+else if (results is not null && results.Any())
+{
+    //Export Button
+    <div class="mb-3 d-flex justify-content-end">
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" disabled="@(results is null || !results.Any())">
+                📤 Export
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <button class="dropdown-item" @onclick="ExportToExcel" disabled="@(results is null || !results.Any())">
+                        📊 Excel
+                    </button>
+                </li>
+                <li>
+                    <button class="dropdown-item" @onclick="ExportToPdf" disabled="@(results is null || !results.Any())">
+                        📄 PDF
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    var sorted = TableSortService.Sort(results, State.SortColumn, State.SortAscending);
+    State.TotalRecords = results.Count;
+    var pageItems = TablePaginationService.Paginate(sorted, State.CurrentPage, State.PageSize).ToList();
+
+    <div class="mt-4 table-responsive">
+        <table class="table table-striped table-bordered table-sm text-center small align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ردیف</th>
+                    <th class="@GetSortClass(nameof(BudgetReportDto.SubProjectCode)) text-center center-cell"
+                        @onclick="() => ChangeSort(nameof(BudgetReportDto.SubProjectCode))">کد زیرپروژه</th>
+                    <th class="@GetSortClass(nameof(BudgetReportDto.ContractTitle)) text-center center-cell"
+                        @onclick="() => ChangeSort(nameof(BudgetReportDto.ContractTitle))">عنوان قرارداد</th>
+                    <th>پیمانکار</th>
+                    <th>مبلغ اولیه قرارداد</th>
+                    <th>مبلغ کل قرارداد</th>
+                    <th>حداکثر اعتبار مورد نیاز</th>
+                    <th>کسری اعتبار تأمین</th>
+                    <th>کسری اعتبار تعهد</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < pageItems.Count; i++)
+                {
+                    var item = pageItems[i];
+                    var rowIndex = (State.CurrentPage - 1) * State.PageSize + i + 1;
+
+                    <tr>
+                        <td>@rowIndex</td>
+                        <td>@item.SubProjectCode</td>
+                        <td>@item.ContractTitle</td>
+                        <td>@item.Contractor</td>
+                        <td>@item.InitialAmount?.ToString("N0")</td>
+                        <td>@item.TotalContractAmount?.ToString("N0")</td>
+                        <td>@item.MaxRequiredCredit?.ToString("N0")</td>
+                        <td>@item.CreditDeficitSupply?.ToString("N0")</td>
+                        <td>@item.CreditDeficitCommitment?.ToString("N0")</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot class="table-secondary fw-bold">
+                <tr>
+                    <td colspan="4">مجموع</td>
+                    <td>@results.Sum(x => x.InitialAmount ?? 0).ToString("N0")</td>
+                    <td>@results.Sum(x => x.TotalContractAmount ?? 0).ToString("N0")</td>
+                    <td>@results.Sum(x => x.MaxRequiredCredit ?? 0).ToString("N0")</td>
+                    <td>@results.Sum(x => x.CreditDeficitSupply ?? 0).ToString("N0")</td>
+                    <td>@results.Sum(x => x.CreditDeficitCommitment ?? 0).ToString("N0")</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex justify-content-center text-muted small mt-2">
+            مجموع رکوردها: <span class="fw-bold text-dark mx-1">@State.TotalRecords</span> |
+            صفحه <span class="fw-bold text-dark mx-1">@State.CurrentPage</span>
+            از <span class="fw-bold text-dark mx-1">@State.TotalPages</span>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-sm btn-outline-secondary" @onclick="GoToFirst" disabled="@(State.CurrentPage == 1)">⏭ اول</button>
+            <button class="btn btn-sm btn-outline-secondary" @onclick="PrevPage" disabled="@(State.CurrentPage == 1)">قبلی</button>
+
+            @for (var i = 1; i <= State.TotalPages; i++)
+            {
+                var pageNumber = i;
+                <button class="btn btn-sm @(pageNumber == State.CurrentPage ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => GoToPage(pageNumber)">
+                    @pageNumber
+                </button>
+            }
+
+            <button class="btn btn-sm btn-outline-secondary" @onclick="NextPage" disabled="@(State.CurrentPage == State.TotalPages)">بعدی</button>
+            <button class="btn btn-sm btn-outline-secondary" @onclick="GoToLast" disabled="@(State.CurrentPage == State.TotalPages)">آخر ⏮</button>
+        </div>
+    </div>
+}
+else if (results is not null)
+{
+    <div class="alert alert-warning mt-4">هیچ رکوردی یافت نشد.</div>
+}
+
+@code {
+    private bool isSearching = false;
+    private List<BudgetReportDto>? results;
+    private List<string> ExecutiveDeptOptions = new();
+    private List<string> ContractStatusOptions = new();
+    private List<string> WorkReferralMethodOptions = new();
+    private List<string> NatureOptions = new();
+
+    private TableState State { get; set; } = new() { PageSize = 10 };
+
+    private BudgetReportFilterDto filters = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        ExecutiveDeptOptions = await BudgetRepository.GetExecutiveDeptAsync();
+        ContractStatusOptions = await BudgetRepository.GetContractStatusAsync();
+        WorkReferralMethodOptions = await BudgetRepository.GetWorkReferralMethodAsync();
+        NatureOptions = await BudgetRepository.GetNatureAsync();
+    }
+
+    private async Task SearchAsync()
+    {
+        isSearching = true;
+        results = await BudgetReportService.GetReportAsync(filters);
+        isSearching = false;
+    }
+
+    private bool isExporting = false;
+
+    private async Task ExportToExcel()
+    {
+        if (results is null || results.Count == 0 || isExporting) return;
+
+        try
+        {
+            isExporting = true;
+            var bytes = ExportService.ExportBudgetReportToExcel(results);
+            var base64 = Convert.ToBase64String(bytes);
+            var fileName = $"BudgetReport_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+
+            await JS.InvokeVoidAsync("downloadFile",
+                fileName,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                base64);
+        }
+        finally
+        {
+            isExporting = false;
+        }
+    }
+
+    private async Task ExportToPdf()
+    {
+        if (results is null || results.Count == 0 || isExporting) return;
+
+        try
+        {
+            isExporting = true;
+            var bytes = ExportService.ExportBudgetReportToPdf(results);
+            var base64 = Convert.ToBase64String(bytes);
+            var fileName = $"BudgetReport_{DateTime.Now:yyyyMMddHHmmss}.pdf";
+
+            await JS.InvokeVoidAsync("downloadFile",
+                fileName,
+                "application/pdf",
+                base64);
+        }
+        finally
+        {
+            isExporting = false;
+        }
+    }
+
+
+    // -------------------------------
+    // 📌 متدهای مربوط به Sort و Paging
+    // -------------------------------
+
+    private void ChangeSort(string column)
+    {
+        if (State.SortColumn == column)
+            State.SortAscending = !State.SortAscending;
+        else
+        {
+            State.SortColumn = column;
+            State.SortAscending = true;
+        }
+        State.ResetPaging();
+        StateHasChanged();
+    }
+
+    private string GetSortClass(string column)
+    {
+        if (State.SortColumn != column) return "sortable";
+        return State.SortAscending ? "sortable asc" : "sortable desc";
+    }
+
+    private void GoToFirst() => State.CurrentPage = 1;
+
+    private void GoToLast()
+    {
+        if (State.TotalPages > 0)
+            State.CurrentPage = State.TotalPages;
+    }
+
+    private void PrevPage()
+    {
+        if (State.CurrentPage > 1)
+            State.CurrentPage--;
+    }
+
+    private void NextPage()
+    {
+        if (State.CurrentPage < State.TotalPages)
+            State.CurrentPage++;
+    }
+
+    private void GoToPage(int p)
+    {
+        if (p < 1) p = 1;
+        if (p > State.TotalPages) p = State.TotalPages;
+        State.CurrentPage = p;
+        StateHasChanged();
+    }
+}

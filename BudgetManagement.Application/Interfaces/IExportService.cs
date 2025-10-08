@@ -1,4 +1,5 @@
 ﻿using BudgetManagement.Application.DTOs;
+using BudgetManagement.Application.DTOs.Budget;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,5 +12,10 @@ namespace BudgetManagement.Application.Interfaces
     {
         byte[] ExportAuditLogsToExcel(IEnumerable<AuditLogDto> logs);
         byte[] ExportAuditLogsToPdf(IEnumerable<AuditLogDto> logs);
+
+        byte[] ExportBudgetReportToExcel(IEnumerable<BudgetReportDto> reports);
+        byte[] ExportBudgetReportToPdf(IEnumerable<BudgetReportDto> reports);
+
+
     }
 }

@@ -3,7 +3,7 @@
 @attribute [Authorize(Policy = "User")]
 
 @using AutoMapper
-@using BudgetManagement.Application.DTOs
+@using BudgetManagement.Application.DTOs.Budget
 @using BudgetManagement.Application.Interfaces
 @using BudgetManagement.Domain.Entities
 @using Microsoft.AspNetCore.Components.Forms
@@ -89,12 +89,12 @@ else if (model is not null)
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">مبلغ کل تامین اعتبار سال جاری</label>
+                <label class="form-label">مبلغ کل تأمین اعتبار سال جاری</label>
                 <InputNumber @bind-Value="model.CurrentYearTotalCredit" class="form-control" />
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">کل مبلغ تامین از ابتدای پیمان</label>
+                <label class="form-label">کل مبلغ تأمین از ابتدای پیمان</label>
                 <InputNumber @bind-Value="model.TotalCreditFromStart" class="form-control" />
             </div>
 
@@ -186,7 +186,7 @@ else if (model is not null)
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">کسری اعتبار تامین</label>
+                <label class="form-label">کسری اعتبار تأمین</label>
                 <InputNumber @bind-Value="model.CreditDeficitSupply" class="form-control highlight-number" />
             </div>
 

@@ -25,6 +25,11 @@ namespace BudgetManagement.Application.Interfaces
         Task<IEnumerable<AuditLogDto>> GetAllAuditLogsWithUserAsync(CancellationToken cancellationToken = default);
         Task<List<string>> GetActionTypeAsync(CancellationToken cancellationToken = default);
 
+        /// <summary>
+        /// برگرداندن کوئری پایه برای رکوردهای بودجه
+        /// (قابل استفاده برای اعمال فیلتر در سرویس گزارش‌گیری)
+        /// </summary>
+        IQueryable<BudgetRecord> GetBudgetRecordsQuery();
 
         // عملیات گروهی بهینه‌شده
         Task<Dictionary<string, BudgetRecord>> GetBySubProjectCodesAsync(

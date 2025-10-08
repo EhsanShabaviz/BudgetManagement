@@ -9,11 +9,14 @@
 </environment>
 
 <environment exclude="Development">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+     @* <script src="https://code.jquery.com/jquery-3.6.0.min.js" 
             integrity="sha256-/xUj+3OJ+Y3VYk8U5r3r6tJzj1p2l9z6VxFqz9z9z9o="
-            crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.3/dist/jquery.validate.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script>
+            crossorigin="anonymous"></script> *@
+            <script src="~/lib/jquery/jquery.min.js"></script>
+    @* <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.3/dist/jquery.validate.min.js"></script> *@
+    <script src="~/lib/jquery-validation/jquery.validate.min.js"></script>
+    @* <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script> *@
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
 </environment>
 
 <script>

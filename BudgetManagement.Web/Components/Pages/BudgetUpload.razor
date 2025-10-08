@@ -295,7 +295,7 @@
             Status = "در حال بارگذاری...";
 
             await using var ms = new MemoryStream();
-            await using var src = _file.OpenReadStream(1024L * 1024 * 64);
+            await using var src = _file.OpenReadStream(1024L * 1024 * 2);// حداکثر حجم مجاز برای باز کردن استریم = 2 مگابایت
             var totalBytes = _file.Size;
             var buffer = new byte[81920];
             long totalRead = 0;

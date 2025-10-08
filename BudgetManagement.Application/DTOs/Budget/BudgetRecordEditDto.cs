@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace BudgetManagement.Application.DTOs
+namespace BudgetManagement.Application.DTOs.Budget
 {
     /// <summary>
     /// View/DTO برای فرم ویرایش رکورد بودجه.
@@ -35,13 +35,13 @@ namespace BudgetManagement.Application.DTOs
         [DisplayName("مبلغ کل قرارداد")]
         public decimal? TotalContractAmount { get; set; }
 
-        [DisplayName("مبلغ اولیه")]
+        [DisplayName("مبلغ اولیه قرارداد")]
         public decimal? InitialAmount { get; set; }
 
-        [DisplayName("مبلغ کل تامین اعتبار سال جاری")]
+        [DisplayName("مبلغ کل تأمین اعتبار سال جاری")]
         public decimal? CurrentYearTotalCredit { get; set; }
 
-        [DisplayName("کل مبلغ تامین از ابتدای پیمان")]
+        [DisplayName("کل مبلغ تأمین از ابتدای پیمان")]
         public decimal? TotalCreditFromStart { get; set; }
 
         [StringLength(250), DisplayName("معاونت اجرایی")]
@@ -80,7 +80,7 @@ namespace BudgetManagement.Application.DTOs
         [DisplayName("حداکثر اعتبار موردنیاز")]
         public decimal? MaxRequiredCredit { get; set; }
 
-        [DisplayName("کسری اعتبار تامین")]
+        [DisplayName("کسری اعتبار تأمین")]
         public decimal? CreditDeficitSupply { get; set; }
 
         [DisplayName("کسری اعتبار تعهد")]

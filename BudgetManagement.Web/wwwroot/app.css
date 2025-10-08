@@ -190,10 +190,10 @@ h1:focus {
 
 /* رنگ بکگراند و متن در حالت hover */
 /*.userMenu-hover:hover {*/
-    /*background-color: #e7f1ff;*/ /* Blue Light */
-    /*background-color: #dde3ea;*/ /*Gray of Google*/
-    /*background: rgba(68,71,70,.08);*/ /*Gray of Google*/
-    /*color: #0d6efd;*/
+/*background-color: #e7f1ff;*/ /* Blue Light */
+/*background-color: #dde3ea;*/ /*Gray of Google*/
+/*background: rgba(68,71,70,.08);*/ /*Gray of Google*/
+/*color: #0d6efd;*/
 /*}*/
 
 
@@ -231,7 +231,7 @@ h1:focus {
     .about-btn-hover:hover {
         background-color: rgba(68,71,70,.08); /* خاکستری گوگل */
         color: #000;
-        text-decoration: none; 
+        text-decoration: none;
     }
 
 /* Overlay تمام‌صفحه با پس‌زمینه نیمه‌تاریک */
@@ -256,4 +256,136 @@ h1:focus {
     width: 4rem;
     height: 4rem;
     border-width: 0.45rem;
+}
+
+
+/* 🎚️ DualRangeSlider */
+
+.dual-range-slider {
+    width: 100%;
+    direction: rtl;
+    font-family: inherit;
+    border: solid;
+    border-width: thin;
+    border-radius: 10px;
+    border-color: #aaadaf;
+    padding: 10px;
+}
+
+    /* متن‌ها RTL می‌مانند، ولی فیزیک اسلایدر LTR تا محاسبات left درست بماند */
+    .dual-range-slider .inputs,
+    .dual-range-slider label {
+        direction: rtl;
+        text-align: right;
+    }
+
+        .dual-range-slider .inputs input {
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+            .dual-range-slider .inputs input:focus {
+                border-color: #0d6efd;
+                box-shadow: 0 0 5px rgba(13, 110, 253, 0.3);
+                outline: none;
+            }
+
+.slider-container {
+    position: relative;
+    height: 8px;
+    margin-top: 20px;
+    direction: ltr; /* خیلی مهم برای left و width */
+}
+
+.track {
+    position: absolute;
+    width: 100%;
+    height: 8px;
+    border-radius: 5px;
+    background: #e3e3e3;
+    z-index: 1;
+}
+
+.range {
+    position: absolute;
+    top: 0;
+    height: 8px;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #0077b6, #00b4d8);
+    z-index: 2;
+    /*    transition: all 0.15s ease-in-out;*/
+}
+
+.thumb {
+    position: absolute;
+    width: 100%;
+    height: 8px;
+    background: none;
+    pointer-events: none;
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+    z-index: 3;
+}
+
+    .thumb::-webkit-slider-thumb {
+        pointer-events: all;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #0077b6;
+        border: 3px solid white;
+        box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        -webkit-appearance: none;
+        transition: all 0.15s ease-in-out;
+    }
+
+        .thumb::-webkit-slider-thumb:hover {
+            background: #0096c7;
+            transform: scale(1.15);
+        }
+
+    .thumb::-moz-range-thumb {
+        pointer-events: all;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #0077b6;
+        border: 3px solid white;
+        box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: all 0.15s ease-in-out;
+    }
+
+        .thumb::-moz-range-thumb:hover {
+            background: #0096c7;
+            transform: scale(1.15);
+        }
+
+    /* حذف ترک داخلی پیش‌فرض */
+    .thumb::-webkit-slider-runnable-track,
+    .thumb::-moz-range-track {
+        height: 8px;
+        background: transparent;
+    }
+
+.dual-range-slider span {
+    color: #444;
+}
+
+.dual-range-slider .inputs .d-flex {
+    align-items: center;
+}
+
+.overlapped::-webkit-slider-thumb {
+    background: #ff5722;
+    transform: scale(1.1);
+}
+
+.overlapped::-moz-range-thumb {
+    background: #ff5722;
+    transform: scale(1.1);
 }

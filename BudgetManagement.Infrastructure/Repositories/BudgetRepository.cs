@@ -2,6 +2,7 @@
 using BudgetManagement.Application.Interfaces;
 using BudgetManagement.Domain.Entities;
 using BudgetManagement.Infrastructure.Persistence;
+using DocumentFormat.OpenXml.InkML;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -176,6 +177,11 @@ namespace BudgetManagement.Infrastructure.Repositories
                 .Distinct()
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
+        }
+
+        public IQueryable<BudgetRecord> GetBudgetRecordsQuery()
+        {
+            return _db.BudgetRecords.AsQueryable();
         }
     }
 }
