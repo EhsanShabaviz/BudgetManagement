@@ -30,6 +30,7 @@ builder.Services.AddScoped<IBudgetImportUseCase, BudgetImportUseCase>();
 builder.Services.AddScoped<BudgetImportValidator>();
 builder.Services.AddScoped<IBudgetCalculationUseCase, BudgetCalculationUseCase>();
 builder.Services.AddScoped<IAuditLogger, AuditLogger>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IClientInfoProvider, ClientInfoProvider>();
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IBudgetReportService, BudgetReportService>();

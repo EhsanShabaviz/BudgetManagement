@@ -57,7 +57,7 @@ namespace BudgetManagement.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AuditLogs");
+                    b.ToTable("AuditLogs", (string)null);
                 });
 
             modelBuilder.Entity("BudgetManagement.Domain.Entities.BudgetRecord", b =>
@@ -153,7 +153,7 @@ namespace BudgetManagement.Infrastructure.Persistence.Migrations
 
                     b.HasKey("SubProjectCode");
 
-                    b.ToTable("BudgetRecords");
+                    b.ToTable("BudgetRecords", (string)null);
                 });
 
             modelBuilder.Entity("BudgetManagement.Domain.Entities.Nature", b =>
@@ -170,7 +170,7 @@ namespace BudgetManagement.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Natures");
+                    b.ToTable("Natures", (string)null);
 
                     b.HasData(
                         new

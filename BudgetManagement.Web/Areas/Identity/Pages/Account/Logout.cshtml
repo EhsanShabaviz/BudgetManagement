@@ -2,13 +2,10 @@
 @attribute [Authorize]
 
 @using BudgetManagement.Application.Interfaces
-@using BudgetManagement.Infrastructure.Identity
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Identity
 @using System.Security.Claims
 
-@inject SignInManager<ApplicationUser> signInManager
-@inject IAuditLogger auditLogger
+@inject IAuthService authService
 
 @{
     Layout = null;
@@ -20,12 +17,10 @@
     public async Task<IActionResult> OnGet()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
-        var userName = User.Identity?.Name ?? "Unknown";
 
-        if (signInManager.IsSignedIn(User))
+        if (!string.IsNullOrEmpty(userId))
         {
-            await signInManager.SignOutAsync();
-            await auditLogger.LogAsync(userId, userName, "Logout");
+            await authService.LogoutAsync(userId);
         }
 
         return Redirect("~/");
