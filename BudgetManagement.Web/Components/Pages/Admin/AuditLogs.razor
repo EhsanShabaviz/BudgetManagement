@@ -107,16 +107,16 @@ else if (results is not null && results.Any())
     var pageItems = TablePaginationService.Paginate(sorted, State.CurrentPage, State.PageSize).ToList();
 
     <div class="mt-4 table-responsive">
-        <table class="table table-striped table-bordered table-sm text-center small align-middle">
-            <thead class="table-light">
+        <table class="table table-striped table-bordered table-sm text-center small align-middle table-sticky-header">
+            <thead class="table-light center-cell">
                 <tr>
                     <th style="width:72px;" class="text-center">ردیف</th>
-                    <th class="@GetSortClass(nameof(AuditLogDto.UserName)) text-center" @onclick="() => ChangeSort(nameof(AuditLogDto.UserName))">کاربر</th>
-                    <th class="@GetSortClass(nameof(AuditLogDto.ActionType)) text-center" @onclick="() => ChangeSort(nameof(AuditLogDto.ActionType))">عملیات</th>
-                    <th class="@GetSortClass(nameof(AuditLogDto.Description)) text-center" @onclick="() => ChangeSort(nameof(AuditLogDto.Description))">توضیحات</th>
-                    <th class="@GetSortClass(nameof(AuditLogDto.DateTime)) text-center" @onclick="() => ChangeSort(nameof(AuditLogDto.DateTime))">تاریخ</th>
-                    <th class="@GetSortClass(nameof(AuditLogDto.IPAddress)) text-center" @onclick="() => ChangeSort(nameof(AuditLogDto.IPAddress))">IP</th>
-                    <th class="@GetSortClass(nameof(AuditLogDto.BrowserInfo)) text-center" @onclick="() => ChangeSort(nameof(AuditLogDto.BrowserInfo))">مرورگر</th>
+                    <th class="@GetSortClass(nameof(AuditLogDto.UserName))" @onclick="() => ChangeSort(nameof(AuditLogDto.UserName))">کاربر</th>
+                    <th class="@GetSortClass(nameof(AuditLogDto.ActionType))" @onclick="() => ChangeSort(nameof(AuditLogDto.ActionType))">عملیات</th>
+                    <th class="@GetSortClass(nameof(AuditLogDto.Description))" @onclick="() => ChangeSort(nameof(AuditLogDto.Description))">توضیحات</th>
+                    <th class="@GetSortClass(nameof(AuditLogDto.DateTime))" @onclick="() => ChangeSort(nameof(AuditLogDto.DateTime))">تاریخ</th>
+                    <th class="@GetSortClass(nameof(AuditLogDto.IPAddress))" @onclick="() => ChangeSort(nameof(AuditLogDto.IPAddress))">IP</th>
+                    <th class="@GetSortClass(nameof(AuditLogDto.BrowserInfo))" @onclick="() => ChangeSort(nameof(AuditLogDto.BrowserInfo))">مرورگر</th>
                 </tr>
             </thead>
             <tbody>

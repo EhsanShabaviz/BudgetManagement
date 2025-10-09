@@ -152,6 +152,24 @@ h1:focus {
     color: white;
 }
 
+/* اسکرول هدر جدول */
+.table-responsive {
+    max-height: 600px; /* ارتفاع حداکثر جدول برای اسکرول (قابل تنظیم) */
+    overflow-y: auto; /* اسکرول عمودی فقط برای body */
+}
+
+/* استایل sticky header برای جدول */
+.table-sticky-header thead th {
+    position: sticky;
+    top: 0; /* ثابت در بالای صفحه/جدول */
+    z-index: 10; /* بالای بقیه عناصر */
+    /*background-color: #f8f9fa;*/ /* رنگ پس‌زمینه header برای جلوگیری از شفافیت */
+    border-bottom: 2px solid #dee2e6; /* مرز پایین برای جداسازی */
+}
+
+
+
+
 /*چک‌باکس*/
 .roles-box {
     border: 1px solid #ddd; /* کادر کلی */

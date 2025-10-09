@@ -1,0 +1,58 @@
+﻿@typeparam TValue
+@inherits InputNumber<TValue>
+
+<input @attributes="AdditionalAttributes"
+       class="@CssClass"
+       value="@displayValue"
+       onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+       @oninput="OnInput"
+       @onblur="OnBlur" />
+
+@code {
+    private string? displayValue;
+
+    protected override void OnParametersSet()
+    {
+        if (CurrentValue != null)
+            displayValue = string.Format("{0:N0}", CurrentValue);
+        else
+            displayValue = string.Empty;
+    }
+
+    private void OnInput(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? "";
+
+        // اگر کاربر همه چیز رو پاک کرد
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            CurrentValueAsString = "";   // مدل رو خالی کن
+            displayValue = "";           // UI هم خالی بشه
+            return;
+        }
+
+        // جداکننده‌ها رو حذف کن
+        var digitsOnly = raw.Replace(",", "").Replace(" ", "");
+
+        if (decimal.TryParse(digitsOnly, out var dec))
+        {
+            // مقدار واقعی مدل (بدون جداکننده)
+            CurrentValueAsString = digitsOnly;
+
+            // مقدار نمایشی (با جداکننده)
+            displayValue = string.Format("{0:N0}", dec);
+        }
+        else
+        {
+            displayValue = raw;
+        }
+    }
+
+    private void OnBlur(FocusEventArgs e)
+    {
+        if (CurrentValue != null)
+            displayValue = string.Format("{0:N0}", CurrentValue);
+        else
+            displayValue = "";
+    }
+}
