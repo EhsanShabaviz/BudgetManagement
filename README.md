@@ -10,7 +10,7 @@ A Blazor Server web application to manage and calculate government project budge
 
 - **Domain**: Business entities only (no dependencies)
 - **Application**: UseCases, Interfaces, DTOs
-- **Infrastructure**: EF Core, Repositories, Excel/File Readers
+- **Infrastructure**: EF Core, Repositories, Services, Excel/File Readers
 - **Common**: Shared extensions and utilities (e.g., Persian date and string helpers)
 - **Web (Presentation)**: UI Layer with Blazor Server
 - **Tests**: Unit and integration tests
@@ -22,7 +22,7 @@ A Blazor Server web application to manage and calculate government project budge
 ├── BudgetManagement.Domain
 │   └── Entities, Interfaces
 ├── BudgetManagement.Application
-│   └── UseCases, Interfaces, DTOs, Services
+│   └── UseCases, Interfaces, DTOs
 ├── BudgetManagement.Infrastructure
 │   └── Repositories, Configuration, Services
 ├── BudgetManagement.Common
